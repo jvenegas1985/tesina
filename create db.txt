@@ -1,0 +1,28 @@
+CREATE TABLE residentes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido1 VARCHAR(100) NOT NULL,
+    apellido2 VARCHAR(100) NOT NULL,	
+    cedula VARCHAR(50) UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    genero ENUM('Masculino', 'Femenino', 'Otro'),
+    estado_civil ENUM('Soltero', 'Casado', 'Viudo', 'Divorciado'),
+    nacionalidad VARCHAR(50),
+    direccion TEXT,
+    telefono_contacto VARCHAR(20),
+    
+    contacto_emergencia_nombre VARCHAR(100),
+    contacto_emergencia_parentesco VARCHAR(50),
+    contacto_emergencia_telefono VARCHAR(20),
+
+    condiciones_medicas TEXT,
+    alergias TEXT, ----eliminar
+    medicamentos_actuales TEXT,
+
+    movilidad ENUM('Independiente', 'Con ayuda', 'Dependiente'),
+    estado_mental ENUM('Lúcido', 'Desorientado', 'Demencia', 'Otro'),
+    
+    fecha_ingreso DATE,
+    fecha_egreso DATE,
+    activo BOOLEAN DEFAULT TRUE
+);
