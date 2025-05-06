@@ -152,9 +152,8 @@ def btn_cliente_guardar():
 
 
 @app.route('/modulos/clientes/create/edit/<string:id>', methods=['POST'])
-
 def btn_cliente_editar_guardar(id):
-    # Obtener los datos del formulario
+    # Obtener datos del formulario
     nombre = request.form['nombre']
     apellido1 = request.form['apellido1']
     apellido2 = request.form['apellido2']
@@ -172,8 +171,14 @@ def btn_cliente_editar_guardar(id):
     medicamentos_actuales = request.form['medicamentos']
     movilidad = request.form['movilidad']
     estado_mental = request.form['estado_mental']
-    
-    # SQL para actualizar
+
+    data = (
+        nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad,
+        direccion, telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco,
+        contacto_emergencia_telefono, condiciones_medicas, medicamentos_actuales, movilidad,
+        estado_mental, id
+    )
+
     sql = """
         UPDATE residentes
         SET nombre = %s,
@@ -197,29 +202,26 @@ def btn_cliente_editar_guardar(id):
         WHERE id = %s
     """
 
-    data = (
-        nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad,
-        direccion, telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco,
-        contacto_emergencia_telefono, condiciones_medicas, medicamentos_actuales, movilidad,
-        estado_mental, id  # El ID debe ir al final para el WHERE
-    )
-
     cursor = db.database.cursor()
-    cursor.execute(sql, data)
-    cursor.execute("SELECT * FROM residentes where id= %s", (id,))
-    datos= cursor.fetchall() 
-    arreglo=[]
-    columnames=[colum[0] for colum in cursor.description]
-    for record in datos:
-         arreglo.append(dict(zip(columnames,record)))
-    
-    cursor.close()
-    db.database.commit()
-    cursor.close()
 
-    mensaje = 'actualizado'
-    return render_template('modulos/clientes/edit.html', arreglo=arreglo, mensaje=mensaje, id=id)
+    cursor.execute("SELECT cedula FROM residentes WHERE cedula = %s", (cedula,))
+    existente = cursor.fetchone()
+        
+    if existente:
+        mensaje = 'existe'
+    return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
 
-   
+    try:
+        cursor.execute(sql, data)
+        db.database.commit()
+    except IntegrityError as e:
+        mensaje = f"Error al guardar: {e}"
+        return render_template('modulos/clientes/create/edit.html', mensaje=mensaje, residente=request.form)
+    finally:
+        cursor.close()
+
+    # ✅ Redirige correctamente
+    return redirect(url_for('index_editar',id=id))
+
 if __name__ == '__main__':
     app.run(debug=True)
