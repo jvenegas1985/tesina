@@ -75,7 +75,7 @@
         // Si la búsqueda está vacía, no se hace la petición
         if (!query) {
             return;
-        }
+                    }
 
         fetch(`/buscar?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
