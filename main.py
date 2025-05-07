@@ -179,49 +179,45 @@ def btn_cliente_editar_guardar(id):
         estado_mental, id
     )
 
-    sql = """
-        UPDATE residentes
-        SET nombre = %s,
-            apellido1 = %s,
-            apellido2 = %s,
-            cedula = %s,
-            fecha_nacimiento = %s,
-            genero = %s,
-            estado_civil = %s,
-            nacionalidad = %s,
-            direccion = %s,
-            telefono_contacto = %s,
-            contacto_emergencia_nombre = %s,
-            contacto_emergencia_parentesco = %s,
-            contacto_emergencia_telefono = %s,
-            condiciones_medicas = %s,
-            medicamentos_actuales = %s,
-            movilidad = %s,
-            estado_mental = %s,
-            activo = 1
-        WHERE id = %s
-    """
-
     cursor = db.database.cursor()
 
-    cursor.execute("SELECT cedula FROM residentes WHERE cedula = %s", (cedula,))
+    # ✅ Validar cédula duplicada (excluyendo el mismo registro)
+    cursor.execute("SELECT id FROM residentes WHERE cedula = %s AND id != %s", (cedula, id))
     existente = cursor.fetchone()
         
     if existente:
         mensaje = 'existe'
+        return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
+    # ✅ Intentar guardar cambios
+    
+    sql = """
+            UPDATE residentes
+            SET nombre = %s,
+                apellido1 = %s,
+                apellido2 = %s,
+                cedula = %s,
+                fecha_nacimiento = %s,
+                genero = %s,
+                estado_civil = %s,
+                nacionalidad = %s,
+                direccion = %s,
+                telefono_contacto = %s,
+                contacto_emergencia_nombre = %s,
+                contacto_emergencia_parentesco = %s,
+                contacto_emergencia_telefono = %s,
+                condiciones_medicas = %s,
+                medicamentos_actuales = %s,
+                movilidad = %s,
+                estado_mental = %s,
+                activo = 1
+            WHERE id = %s
+        """
+    cursor.execute(sql, data)
+    db.database.commit()    
+    cursor.close()
+    mensaje = 'no_existe'
     return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
 
-    try:
-        cursor.execute(sql, data)
-        db.database.commit()
-    except IntegrityError as e:
-        mensaje = f"Error al guardar: {e}"
-        return render_template('modulos/clientes/create/edit.html', mensaje=mensaje, residente=request.form)
-    finally:
-        cursor.close()
-
-    # ✅ Redirige correctamente
-    return redirect(url_for('index_editar',id=id))
 
 if __name__ == '__main__':
     app.run(debug=True)
