@@ -1,5 +1,5 @@
 import mysql.connector
-from flask import Flask,make_response, redirect, url_for, render_template, request, flash
+from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash
 import database as db
 
 app = Flask(__name__)
@@ -29,8 +29,7 @@ def home():
 
 
 
-# Ruta para ver la lista de clientes
-from flask import make_response, render_template
+
 
 @app.route('/clientes')
 def index_clientes():
@@ -62,22 +61,20 @@ def index_create():
 
 
 
+
 @app.route('/edit/<string:id>', methods=['GET'])
-def index_editar(id):
-    cursor = db.database.cursor() # Establecer conexión
-    cursor.execute("SELECT * FROM residentes where id= %s", (id,))
-    datos= cursor.fetchall() 
-    arreglo=[]
-    columnames=[colum[0] for colum in cursor.description]
+def index_editar(id):  # Asegúrate de que se reciba `id`
+    cursor = db.database.cursor()  # Establecer conexión
+    cursor.execute("SELECT * FROM residentes WHERE id = %s", (id,))
+    datos = cursor.fetchall() 
+    arreglo = []
+    columnames = [col[0] for col in cursor.description]
     for record in datos:
-         arreglo.append(dict(zip(columnames,record)))
+         arreglo.append(dict(zip(columnames, record)))
     
-    cursor.close()  # Cerrar el cursor  # Cerrar el cursor
-    
-  # Cerrar la conexión
+    cursor.close()  # Cerrar el cursor
     return render_template('modulos/clientes/edit.html', arreglo=arreglo)
 
-# Ruta para eliminar un residente
 
 @app.route('/eliminar/<string:id>',methods=['GET', 'POST'])
 def eliminar_residente(id):
@@ -217,6 +214,44 @@ def btn_cliente_editar_guardar(id):
     cursor.close()
     mensaje = 'no_existe'
     return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
+
+
+
+##busqueda por dato ingresado
+
+@app.route('/buscar')
+def buscar():
+    query = request.args.get('q')
+    if not query:
+        return jsonify([])
+
+    query = query.lower()
+    like_query = f"%{query}%"
+    sql = """
+        SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion
+        FROM residentes
+        WHERE 
+            LOWER(nombre) LIKE %s OR
+            LOWER(apellido1) LIKE %s OR
+            LOWER(apellido2) LIKE %s OR
+            LOWER(nacionalidad) LIKE %s OR
+            LOWER(telefono_contacto) LIKE %s OR
+            cedula LIKE %s
+        LIMIT 20
+    """
+    cursor = db.database.cursor()  # Establecer conexión
+    cursor.execute(sql, (like_query,) * 6)
+    datos = cursor.fetchall()
+    arreglo = []
+    columnames = [col[0] for col in cursor.description]
+    for record in datos:
+        arreglo.append(dict(zip(columnames, record)))
+    
+    cursor.close()
+    return jsonify(arreglo)
+
+
+
 
 
 if __name__ == '__main__':
