@@ -93,24 +93,23 @@ def eliminar_residente(id):
 @app.route('/modulos/clientes/create/guardar', methods=['POST'])
 def btn_cliente_guardar():
    
-        # Obtener los datos del formulario
-        nombre = request.form['nombre']
-        apellido1 = request.form['apellido1']
-        apellido2 = request.form['apellido2']
-        cedula = request.form['cedula']
-        fecha_nacimiento = request.form['fecha_nacimiento']
-        genero = request.form['genero']
-        estado_civil = request.form['estado_civil']
-        nacionalidad = request.form['pais_nacimiento']
-        direccion = request.form['direccion']
-        telefono_contacto = request.form['telefono']
-        contacto_emergencia_nombre = request.form['nombre_contacto_emergencia']
-        contacto_emergencia_parentesco = request.form['contacto_emergencia_parentesco']
-        contacto_emergencia_telefono = request.form['telefono_emergencia']
-        condiciones_medicas = request.form['condiciones_medicas']
-        medicamentos_actuales = request.form['medicamentos']
-        movilidad = request.form['movilidad']
-        estado_mental = request.form['estado_mental']
+        nombre = request.form.get('nombre', '').strip().upper()
+        apellido1 = request.form.get('apellido1', '').strip().upper()
+        apellido2 = request.form.get('apellido2', '').strip().upper()
+        cedula = request.form.get('cedula', '').strip()
+        fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
+        genero = request.form.get('genero', '').strip().upper()
+        estado_civil = request.form.get('estado_civil', '').strip().upper()
+        nacionalidad = request.form.get('pais_nacimiento', '').strip().upper()
+        direccion = request.form.get('direccion', '').strip().upper()
+        telefono_contacto = request.form.get('telefono', '').strip()
+        contacto_emergencia_nombre = request.form.get('nombre_contacto_emergencia', '').strip().upper()
+        contacto_emergencia_parentesco = request.form.get('contacto_emergencia_parentesco', '').strip().upper()
+        contacto_emergencia_telefono = request.form.get('telefono_emergencia', '').strip()
+        condiciones_medicas = request.form.get('condiciones_medicas', '').strip().upper()
+        medicamentos_actuales = request.form.get('medicamentos', '').strip().upper()
+        movilidad = request.form.get('movilidad', '').strip().upper()
+        estado_mental = request.form.get('estado_mental', '').strip().upper()
         
         # SQL para insertar un nuevo cliente
         sql = """
@@ -253,6 +252,19 @@ def buscar():
 
 
 
+
+@app.route('/ver_info/<string:id>', methods=['GET'])
+def index_ver_info(id):
+    cursor = db.database.cursor()  # Establecer conexión
+    cursor.execute("SELECT * FROM residentes WHERE id = %s", (id,))
+    datos = cursor.fetchall() 
+    arreglo = []
+    columnames = [col[0] for col in cursor.description]
+    for record in datos:
+         arreglo.append(dict(zip(columnames, record)))
+    
+    cursor.close()  # Cerrar el cursor
+    return render_template('/modulos/clientes/ver_info.html', arreglo=arreglo)
 
 if __name__ == '__main__':
     app.run(debug=True)

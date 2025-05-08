@@ -5,14 +5,14 @@
   <h3>Lista de Residentes</h3>
 </div>
 
-<form class="d-flex mb-3" role="search" onsubmit="return false;">
+<form class="d-flex mb-6" role="search" onsubmit="return false;">
   <input class="form-control me-2 w-25" type="search" id="buscador" placeholder="Buscar por Cédula o Nombre" aria-label="Buscar" />
   
   <a href="/create" class="btn btn-primary">Crear Nuevo</a>
 </form>
 
 <div class="col-12">
-  <div class="table-responsive table-sm rounded-2 table-bordered center">
+  <div class="table-responsive table-lg rounded-2 table-bordered center">
     <table class="table table-striped table-hover">
       <thead class="table table-dark table-hover">
         <tr>
@@ -40,6 +40,9 @@
               <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminar{{ a.id }}" id="btn-eliminar{{ a.id }}">
                 <i class="bi bi-trash3"></i> Eliminar
               </button>
+              <a href="{{ url_for('index_ver_info', id=a.id) }}" class="btn btn-primary " id="btn-ver-info">
+                <i class="bi bi-person-gear"></i> Ver Informacion
+              </a>
               
             </td>
           </tr>
@@ -95,6 +98,7 @@
                         <td>
                             <a href="/edit/${a.id}" class="btn btn-success" id="btn-edit">Editar</a>
                             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#eliminar${a.id}" id="btn-eliminar${a.id}">Eliminar</button>
+                            <a href="/ver_info/${a.id}" class="btn btn-primary " id="btn-ver-info"><i class="bi bi-person-gear"></i> Ver Informacion</a>
                         </td>
                         
                     `;

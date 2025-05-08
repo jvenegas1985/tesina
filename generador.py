@@ -4,7 +4,7 @@ import random
 faker = Faker('es_ES')  # Localización en español
 
 # Función para generar un INSERT por cada residente
-def generar_insert_residentes(n=50):
+def generar_insert_residentes(n=1000):
     inserts = []
     for i in range(n):
         nombre = faker.first_name()
