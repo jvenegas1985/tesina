@@ -1,7 +1,7 @@
 import mysql.connector
 from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash, session
 import database as db
-import bcrypt
+
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -299,50 +299,45 @@ def login():
 
 
 # Mostrar historial médico
-@app.route('/historial_medico/<string:id>', methods=['GET'])
-def ver_historial_medico(id):
-    cursor = db.database.cursor()
-
-    # Obtener los datos del residente
-    cursor.execute("SELECT nombre FROM residentes WHERE id = %s", (id,))
-    residente = cursor.fetchone()  # Esto devuelve una tupla como ('Juan Pérez',)
-
-    # Obtener historial médico
-    cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s ORDER BY fecha DESC", (id,))
+@app.route('/historial_medico/<int:id>')
+def historial_medico(id):
+    cursor = db.database.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s", (id,))
     historial = cursor.fetchall()
-
+    cursor.execute("SELECT * FROM  medicacion WHERE residente_id = %s", (id,))
+    medicacion = cursor.fetchall()
     cursor.close()
+    return render_template('/modulos/clientes/historial_medico.html', historial=historial, medicacion=medicacion ,residente_id=id)
 
-    return render_template(
-        'modulos/clientes/historial_medico.html',
-        historial=historial,
-        id=id,
-        residente_nombre=residente[0] if residente else "Desconocido"
-    )
-
-# Agregar nueva entrada
-@app.route('/historial_medico/agregar', methods=['POST'])
-def agregar_historial_medico():
-    residente_id = request.form.get('residente_id')
+# Ruta para actualizar el historial médico
+@app.route('/historial_medico/<int:id>/actualizar', methods=['POST'])
+def actualizar_historial_medico(id):
+    # Recibimos los datos del formulario
     fecha = request.form.get('fecha')
-    diagnostico = request.form.get('diagnostico')
-    medico = request.form.get('medico')
-    notas = request.form.get('notas')
+    diagnostico = request.form.get('diagnostico', '').strip().upper()
+    medico = request.form.get('medico', '').strip().upper()
+    notas = request.form.get('notas', '').strip().upper()
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO historial_medico (residente_id, fecha, diagnostico, medico, notas)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (residente_id, fecha, diagnostico, medico, notas))
-    conn.commit()
-    conn.close()
+    # Usamos la conexión importada
+    cursor = database.cursor()
 
-    flash('Registro guardado correctamente.', 'success')
-    return redirect(url_for('ver_historial_medico', id=id))
+    try:
+        # Actualizamos el historial médico en la base de datos
+        cursor.execute("""
+            UPDATE historial_medico
+            SET fecha = %s, diagnostico = %s, medico = %s, notas = %s
+            WHERE id = %s
+        """, (fecha, diagnostico, medico, notas, id))
 
+        # Hacemos commit para guardar los cambios
+        database.commit()
+    except Exception as e:
+        # Si ocurre algún error, hacemos rollback
+        database.rollback()
+        print(f"Error: {e}")
+        return "Hubo un error al actualizar el registro."
 
-
+    return redirect(url_for('historial_medico'))  # Redirigir a la lista de historial
 if __name__ == '__main__':
     app.run(debug=True)
 

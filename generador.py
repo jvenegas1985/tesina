@@ -1,48 +1,90 @@
+import mysql.connector
 from faker import Faker
 import random
 
-faker = Faker('en_US')  # Localización en español
+# Configura Faker y conexión
+fake = Faker('es_ES')
 
-# Función para generar un INSERT por cada residente
-def generar_insert_residentes(n=1000):
-    inserts = []
-    for i in range(n):
-        nombre = faker.first_name()
-        apellido1 = faker.last_name()
-        apellido2 = faker.last_name()
-        cedula = faker.random_number(digits=7, fix_len=True)
-        fecha_nacimiento = faker.date_of_birth(minimum_age=60, maximum_age=95).strftime('%Y-%m-%d')
-        genero = random.choice(['Masculino', 'Femenino', 'Otro'])
-        estado_civil = random.choice(['Soltero', 'Casado', 'Viudo', 'Divorciado','Otro'])
-        nacionalidad = faker.country()
-        direccion = faker.address().replace("\n", ", ")
-        telefono_contacto = faker.phone_number()
-        contacto_emergencia_nombre = faker.name()
-        contacto_emergencia_parentesco = random.choice(['Hijo', 'Hija', 'Nieto', 'Sobrino', 'Hermano', 'Esposo'])
-        contacto_emergencia_telefono = faker.random_number(digits=7, fix_len=True)
-        condiciones_medicas = random.choice(['Diabetes', 'Hipertensión', 'Alzheimer', 'Artritis', 'Sano'])
-        medicamentos_actuales = random.choice(['Metformina', 'Losartán', 'Paracetamol', 'Ibuprofeno', 'Ninguno'])
-        movilidad = random.choice(['Independiente', 'Con ayuda', 'Dependiente'])
-        estado_mental = random.choice(['Lúcido', 'Desorientado', 'Demencia'])
-        activo = 1
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="Usuario1",
+    database="proyecto"
+)
 
-        insert = f"""INSERT INTO `proyecto`.`residentes`
-(nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad, direccion,
-telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco, contacto_emergencia_telefono,
-condiciones_medicas, medicamentos_actuales, movilidad, estado_mental, activo)
-VALUES ('{nombre}', '{apellido1}', '{apellido2}', '{cedula}', '{fecha_nacimiento}', '{genero}', '{estado_civil}',
-'{nacionalidad}', '{direccion}', '{telefono_contacto}', '{contacto_emergencia_nombre}', '{contacto_emergencia_parentesco}',
-'{contacto_emergencia_telefono}', '{condiciones_medicas}', '{medicamentos_actuales}', '{movilidad}', '{estado_mental}', {activo});"""
-        
-        inserts.append(insert)
-    return inserts
+cursor = db.cursor()
 
-# Generar los inserts
-inserts_sql = generar_insert_residentes(50)
+# Opciones para ENUMs
+generos = ['Masculino', 'Femenino', 'Otro']
+estado_civil = ['Soltero', 'Casado', 'Viudo', 'Divorciado']
+movilidad = ['Independiente', 'Con ayuda', 'Dependiente']
+estado_mental = ['Lúcido', 'Desorientado', 'Demencia', 'Otro']
 
-# Ruta de guardado en Windows (ajusta según tu usuario si quieres)
-ruta_archivo = "C:\\Users\\Public\\insert_residentes.sql"
-with open(ruta_archivo, "w", encoding="utf-8") as f:
-    f.write("\n\n".join(inserts_sql))
+# Insertar residentes
+for _ in range(5):
+    nombre = fake.first_name()
+    apellido1 = fake.last_name()
+    apellido2 = fake.last_name()
+    cedula = fake.unique.random_number(digits=9)
+    fecha_nacimiento = fake.date_of_birth(minimum_age=65, maximum_age=90)
+    genero = random.choice(generos)
+    civil = random.choice(estado_civil)
+    nacionalidad = fake.country()
+    direccion = fake.address()
+    telefono = fake.phone_number()
+    emergencia_nombre = fake.name()
+    emergencia_parentesco = random.choice(['Hijo', 'Nieto', 'Hermano', 'Amigo'])
+    emergencia_telefono = fake.phone_number()
+    condiciones = fake.sentence()
+    medicamentos = fake.words(nb=3, unique=True)
+    movilidad_val = random.choice(movilidad)
+    estado_mental_val = random.choice(estado_mental)
 
-print(f"Archivo generado en: {ruta_archivo}")
+    cursor.execute("""
+        INSERT INTO residentes (
+            nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad,
+            direccion, telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco,
+            contacto_emergencia_telefono, condiciones_medicas, medicamentos_actuales, movilidad,
+            estado_mental, activo
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+    """, (
+        nombre, apellido1, apellido2, str(cedula), fecha_nacimiento, genero, civil, nacionalidad,
+        direccion, telefono, emergencia_nombre, emergencia_parentesco, emergencia_telefono,
+        condiciones, ', '.join(medicamentos), movilidad_val, estado_mental_val
+    ))
+
+    residente_id = cursor.lastrowid
+
+    # Insertar historial médico
+    for _ in range(random.randint(2, 3)):
+        cursor.execute("""
+            INSERT INTO historial_medico (residente_id, fecha, diagnostico, observaciones)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            residente_id,
+            fake.date_between(start_date='-2y', end_date='today'),
+            fake.sentence(nb_words=6),
+            fake.paragraph()
+        ))
+
+    # Insertar medicación
+    for _ in range(random.randint(2, 3)):
+        fecha_ini = fake.date_between(start_date='-1y', end_date='-1m')
+        fecha_fin = fake.date_between(start_date=fecha_ini, end_date='today')
+        cursor.execute("""
+            INSERT INTO medicacion (residente_id, medicamento, dosis, frecuencia, fecha_inicio, fecha_fin)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            residente_id,
+            fake.word().capitalize(),
+            f"{random.randint(1, 2)} cápsulas",
+            random.choice(['1 vez al día', '2 veces al día', 'Cada 8 horas']),
+            fecha_ini,
+            fecha_fin
+        ))
+
+db.commit()
+cursor.close()
+db.close()
+
+print("Datos generados exitosamente.")

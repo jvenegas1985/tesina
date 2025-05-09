@@ -1,39 +1,97 @@
 {% include 'header.html' %}
 
-<div class="container mt-5 pt-4">
-  <h2 class="mb-4 text-center">Gestión de Salud - Registro</h2>
+<div class="container mt-1 pt-4">
+  <h5 class="mb-4 text-center">Historial Médico de Residente</h5>
 
-  <a href="/historial_medico" class="btn btn-sm btn-outline-success mb-4">
-    <i class="fas fa-heartbeat"></i> Ver Historial Médico
+  <a href="/ver_info/{{ residente_id }}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="fas fa-arrow-left"></i> Regresar
   </a>
 
-  {% for a in historial %}
-  <div class="card mb-4">
-    <div class="card-body">
-      <form action="/historial_medico/{{ a.id }}/actualizar" method="POST">
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label for="fecha{{ a.id }}" class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="fecha{{ a.id }}" name="fecha" value="{{ a.fecha }}" required>
+  <div class="row">
+    <!-- Columna izquierda: Historial Médico -->
+    <div class="col-md-8">
+      <div class="card shadow-lg rounded-4 mb-4">
+        <div class="card-body">
+          <h6 class="card-title text-primary">Historial Médico</h6>
+          <p class="text-muted">Registros médicos del residente.</p>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead class="table-light">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Diagnóstico</th>
+                  <th>Observaciones</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for registro in historial %}
+                <tr>
+                  <td>{{ registro.fecha }}</td>
+                  <td>{{ registro.diagnostico }}</td>
+                  <td>{{ registro.observaciones }}</td>
+                  <td class="text-center">
+                    <a href="/historial_medico/{{ registro.id }}/editar" class="btn btn-sm btn-outline-warning">✏️</a>
+                    <a href="/historial_medico/{{ registro.id }}/eliminar" class="btn btn-sm btn-outline-danger">🗑️</a>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">No hay registros.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
-          <div class="col-md-4 mb-3">
-            <label for="diagnostico{{ a.id }}" class="form-label">Diagnóstico</label>
-            <input type="text" class="form-control" id="diagnostico{{ a.id }}" name="diagnostico" value="{{ a.diagnostico }}" required>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label for="medico{{ a.id }}" class="form-label">Médico Tratante</label>
-            <input type="text" class="form-control" id="medico{{ a.id }}" name="medico" value="{{ a.medico }}">
+          <div class="text-center mt-3">
+            <a href="/historial_medico/nuevo/{{ residente_id }}" class="btn btn-outline-success">
+              ➕ Agregar Registro Médico
+            </a>
           </div>
         </div>
-        <div class="mb-3">
-          <label for="notas{{ a.id }}" class="form-label">Notas Adicionales</label>
-          <textarea class="form-control" id="notas{{ a.id }}" name="notas" rows="3">{{ a.notas }}</textarea>
+      </div>
+    </div>
+
+    <!-- Columna derecha: Medicación -->
+    <div class="col-md-4">
+      <div class="card shadow-lg rounded-4 mb-4">
+        <div class="card-body">
+          <h6 class="card-title text-primary">Medicación Actual</h6>
+          <p class="text-muted">Medicamentos asignados actualmente.</p>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead class="table-light">
+                <tr>
+                  <th>Medicamento</th>
+                  <th>Dosis</th>
+                  <th>Frecuencia</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for medicamento in medicacion %}
+                <tr>
+                  <td>{{ medicamento.medicamento }}</td>
+                  <td>{{ medicamento.dosis }}</td>
+                  <td>{{ medicamento.frecuencia }}</td>
+                  <td class="text-center">
+                    <a href="/medicacion/{{ medicamento.id }}/editar" class="btn btn-sm btn-outline-warning">✏️</a>
+                    <a href="/medicacion/{{ medicamento.id }}/eliminar" class="btn btn-sm btn-outline-danger">🗑️</a>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center">No hay medicación registrada.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="text-center mt-3">
+            <a href="/medicacion/nueva/{{ residente_id }}" class="btn btn-outline-success">
+              ➕ Agregar Medicamento
+            </a>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Actualizar Registro</button>
-      </form>
+      </div>
     </div>
   </div>
-  {% endfor %}
 </div>
 
 {% include 'footer.html' %}
