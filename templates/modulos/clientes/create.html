@@ -2,149 +2,155 @@
 <h4>Agregar Nuevo Registro</h4>
 
 
-<form action="/modulos/clientes/create/guardar" method="POST" id="guardar"> 
-                      <div class="row">
-                      <div class="col-3">
-                      <div class="card">
-                        <div class="card-body">
-                          <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" name="nombre" id="nombre" aria-describedby="helpId" placeholder=""
-                              required />
-                          </div>
-                          <div class="mb-4">
-                            <label for="apellido1" class="form-label">Primer Apellido</label>
-                            <input type="text" class="form-control" name="apellido1" id="apellido1" aria-describedby="helpId"
-                              placeholder="" required />
-                          </div>
-                          <div class="mb-3">
-                            <label for="apellido2" class="form-label">Segundo Apellido</label>
-                            <input type="text" class="form-control" name="apellido2" id="apellido2" aria-describedby="helpId"
-                              placeholder="" required />
-                          </div>
-                          <div class="mb-3">
-                            <label for="cedula" class="form-label">Cédula de Identidad</label>
-                            <input type="text" class="form-control" name="cedula" id="cedula" aria-describedby="helpId" placeholder=""
-                              required />
-                          </div>
-                          <div class="mb-3">
-                            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                            <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento"
-                              aria-describedby="helpId" placeholder="" required />
-                          </div>
-                          <div class="mb-3">
-                            <label for="genero" class="form-label">Género</label>
-                            <select id="genero" name="genero" class="form-select form-select-sm" aria-label="Seleccione su género"
-                              required>
-                              <option value="" selected disabled>Seleccione</option>
-                              <option value="masculino">Masculino</option>
-                              <option value="femenino">Femenino</option>
-                              <option value="otro">Otro</option>
-                            </select>
-                          </div>
-                          <div class="mb-3">
-                            <label for="estado_civil" class="form-label">Estado Civil</label>
-                            <select id="estado_civil" name="estado_civil" class="form-select form-select-sm"
-                              aria-label="Seleccione su estado civil" required>
-                              <option value="" selected disabled>Seleccione</option>
-                              <option value="soltero">Soltero</option>
-                              <option value="casado">Casado</option>
-                              <option value="viudo">Viudo</option>
-                              <option value="divorciado">Divorciado</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer text-muted"></div>
-                    </div>
+<form action="/modulos/clientes/create/guardar" method="POST" id="guardar">
+  <div class="row g-4">
 
-                    <div class="col-3">
-                      <div class="card">
-                        <div class="card-body">
-                          <div class="mb-4">
-                            <label for="pais_nacimiento" class="form-label">País de Nacimiento</label>
-                            <input type="text" class="form-control" name="pais_nacimiento" id="pais_nacimiento"
-                              aria-describedby="helpId" placeholder="" required />
-                          </div>
-                          <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección</label>
-                            <textarea class="form-control" id="direccion" name="direccion" rows="" placeholder="Ingrese su dirección"
-                              required></textarea>
-                          </div>
+    <!-- Columna 1 -->
+    <div class="col-12 col-md-6 col-lg-4">
 
-                          <div class="mb-3">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" name="telefono" id="telefono" aria-describedby="telefonoHelp"
-                              placeholder="" required />
-                            <small id="telefonoHelp" class="form-text text-muted">Ingrese su número de teléfono sin espacios ni
-                              guiones.</small>
-                          </div>
-                <br>
-                          <div class="mb-3">
-                            <label for="nombre_contacto_emergencia" class="form-label">Nombre Contacto Emergencia</label>
-                            <input type="text" class="form-control" name="nombre_contacto_emergencia" id="nombre_contacto_emergencia"
-                              aria-describedby="helpId" placeholder="Ingrese el nombre del contacto de emergencia" required />
-                          </div>
+      <div class="card shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi bi-person"></i> Información Personal</h5>
 
-                          <div class="mb-3">
-                            <label for="telefono_emergencia" class="form-label">Teléfono Contacto Emergencia</label>
-                            <input type="text" class="form-control" name="telefono_emergencia" id="telefono_emergencia"
-                              aria-describedby="helpId" placeholder="" />
-                          </div>
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="nombre" id="nombre" required>
+          </div>
 
-                          <div class="mb-3">
-                            <label for="parentesco" class="form-label">Parentesco Contacto Emergencia</label>
-                            <input type="text" class="form-control" name="contacto_emergencia_parentesco" id="parentesco"
-                              aria-describedby="helpId" placeholder="" />
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-footer text-muted"></div>
-                    </div>
+          <div class="mb-3">
+            <label for="apellido1" class="form-label">Primer Apellido</label>
+            <input type="text" class="form-control" name="apellido1" id="apellido1" required>
+          </div>
 
-                    <div class="col-3">
-                      <div class="card">
-                        <div class="card-body">
-                          <div class="mb-4">
-                            <label for="condiciones_medicas" class="form-label">Condiciones Médicas</label>
-                            <textarea class="form-control" id="condiciones_medicas" name="condiciones_medicas" rows="3"
-                              placeholder="Describa las condiciones médicas si las tiene" required></textarea>
-                          </div>
+          <div class="mb-3">
+            <label for="apellido2" class="form-label">Segundo Apellido</label>
+            <input type="text" class="form-control" name="apellido2" id="apellido2" required>
+          </div>
 
-                          <div class="mb-3">
-                            <label for="medicamentos" class="form-label">Medicamentos</label>
-                            <textarea class="form-control" id="medicamentos" name="medicamentos" rows="3"
-                              placeholder="Especifique los medicamentos que está tomando" required></textarea>
-                          </div>
+          <div class="mb-3">
+            <label for="cedula" class="form-label">Cédula</label>
+            <input type="text" class="form-control" name="cedula" id="cedula" required>
+          </div>
 
-                          <div class="mb-3">
-                            <label for="movilidad" class="form-label">Movilidad</label>
-                            <select class="form-select form-select-sm" id="movilidad" name="movilidad"
-                              aria-label="Seleccione su movilidad" required>
-                              <option value="" selected disabled>Seleccione</option>
-                              <option value="Independiente">Independiente</option>
-                              <option value="con ayuda">Con Ayuda</option>
-                              <option value="Dependiente">Dependiente</option>
-                            </select>
-                          </div>
+          <div class="mb-3">
+            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+            <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento" required>
+          </div>
 
-                          <div class="mb-3">
-                            <label for="estado_mental" class="form-label">Estado Mental</label>
-                            <select class="form-select form-select-sm" id="estado_mental" name="estado_mental"
-                              aria-label="Seleccione su estado mental" required>
-                              <option value="" selected disabled>Seleccione</option>
-                              <option value="lucido">Lúcido</option>
-                              <option value="desorientado">Desorientado</option>
-                              <option value="demencia">Demencia</option>
-                            </select>
-                            <br />
-                            <br />
-                            <br>
-                            <button type="submit" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
-                              form="guardar">
-                              Guardar  
-                            </button>
-</form>      
+          <div class="mb-3">
+            <label for="genero" class="form-label">Género</label>
+            <select class="form-select" name="genero" id="genero" required>
+              <option disabled selected>Seleccione</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="estado_civil" class="form-label">Estado Civil</label>
+            <select class="form-select" name="estado_civil" id="estado_civil" required>
+              <option disabled selected>Seleccione</option>
+              <option value="soltero">Soltero</option>
+              <option value="casado">Casado</option>
+              <option value="viudo">Viudo</option>
+              <option value="divorciado">Divorciado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna 2 -->
+    <div class="col-12 col-md-6 col-lg-4">
+
+      <div class="card shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi bi-house-door"></i> Contacto y Dirección</h5>
+
+          <div class="mb-3">
+            <label for="pais_nacimiento" class="form-label">País de Nacimiento</label>
+            <input type="text" class="form-control" name="pais_nacimiento" id="pais_nacimiento" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="direccion" class="form-label">Dirección</label>
+            <textarea class="form-control" name="direccion" id="direccion" rows="2" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefono" class="form-label">Teléfono</label>
+            <input type="tel" class="form-control" name="telefono" id="telefono" required>
+            <small class="form-text text-muted">Sin guiones ni espacios.</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="nombre_contacto_emergencia" class="form-label">Nombre Contacto Emergencia</label>
+            <input type="text" class="form-control" name="nombre_contacto_emergencia" id="nombre_contacto_emergencia" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefono_emergencia" class="form-label">Teléfono Emergencia</label>
+            <input type="text" class="form-control" name="telefono_emergencia" id="telefono_emergencia">
+          </div>
+
+          <div class="mb-3">
+            <label for="parentesco" class="form-label">Parentesco</label>
+            <input type="text" class="form-control" name="contacto_emergencia_parentesco" id="parentesco">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna 3 -->
+    <div class="col-12 col-md-6 col-lg-4">
+
+      <div class="card shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi bi-clipboard-heart"></i> Salud</h5>
+
+          <div class="mb-3">
+            <label for="condiciones_medicas" class="form-label">Condiciones Médicas</label>
+            <textarea class="form-control" name="condiciones_medicas" id="condiciones_medicas" rows="3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="medicamentos" class="form-label">Medicamentos</label>
+            <textarea class="form-control" name="medicamentos" id="medicamentos" rows="3" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="movilidad" class="form-label">Movilidad</label>
+            <select class="form-select" name="movilidad" id="movilidad" required>
+              <option disabled selected>Seleccione</option>
+              <option value="Independiente">Independiente</option>
+              <option value="con ayuda">Con Ayuda</option>
+              <option value="Dependiente">Dependiente</option>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label for="estado_mental" class="form-label">Estado Mental</label>
+            <select class="form-select" name="estado_mental" id="estado_mental" required>
+              <option disabled selected>Seleccione</option>
+              <option value="lucido">Lúcido</option>
+              <option value="desorientado">Desorientado</option>
+              <option value="demencia">Demencia</option>
+            </select>
+          </div>
+
+          <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save"></i> Guardar Registro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+
     
 
         <br />

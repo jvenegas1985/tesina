@@ -1,5 +1,5 @@
 import mysql.connector
-from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash
+from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash,session
 import database as db
 
 app = Flask(__name__)
@@ -38,7 +38,7 @@ def index_clientes():
         cursor.execute("""
             SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion 
             FROM residentes 
-            ORDER BY id DESC LIMIT 9 OFFSET 0
+            ORDER BY id DESC LIMIT 20 OFFSET 0
         """)
         datos = cursor.fetchall()
         columnames = [col[0] for col in cursor.description]
@@ -150,23 +150,23 @@ def btn_cliente_guardar():
 @app.route('/modulos/clientes/create/edit/<string:id>', methods=['POST'])
 def btn_cliente_editar_guardar(id):
     # Obtener datos del formulario
-    nombre = request.form['nombre']
-    apellido1 = request.form['apellido1']
-    apellido2 = request.form['apellido2']
-    cedula = request.form['cedula']
-    fecha_nacimiento = request.form['fecha_nacimiento']
-    genero = request.form['genero']
-    estado_civil = request.form['estado_civil']
-    nacionalidad = request.form['pais_nacimiento']
-    direccion = request.form['direccion']
-    telefono_contacto = request.form['telefono']
-    contacto_emergencia_nombre = request.form['nombre_contacto_emergencia']
-    contacto_emergencia_parentesco = request.form['contacto_emergencia_parentesco']
-    contacto_emergencia_telefono = request.form['telefono_emergencia']
-    condiciones_medicas = request.form['condiciones_medicas']
-    medicamentos_actuales = request.form['medicamentos']
-    movilidad = request.form['movilidad']
-    estado_mental = request.form['estado_mental']
+    nombre = request.form.get('nombre', '').strip().upper()
+    apellido1 = request.form.get('apellido1', '').strip().upper()
+    apellido2 = request.form.get('apellido2', '').strip().upper()
+    cedula = request.form.get('cedula', '').strip()
+    fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
+    genero = request.form.get('genero', '').strip().upper()
+    estado_civil = request.form.get('estado_civil', '').strip().upper()
+    nacionalidad = request.form.get('pais_nacimiento', '').strip().upper()
+    direccion = request.form.get('direccion', '').strip().upper()
+    telefono_contacto = request.form.get('telefono', '').strip()
+    contacto_emergencia_nombre = request.form.get('nombre_contacto_emergencia', '').strip().upper()
+    contacto_emergencia_parentesco = request.form.get('contacto_emergencia_parentesco', '').strip().upper()
+    contacto_emergencia_telefono = request.form.get('telefono_emergencia', '').strip()
+    condiciones_medicas = request.form.get('condiciones_medicas', '').strip().upper()
+    medicamentos_actuales = request.form.get('medicamentos', '').strip().upper()
+    movilidad = request.form.get('movilidad', '').strip().upper()
+    estado_mental = request.form.get('estado_mental', '').strip().upper()
 
     data = (
         nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad,
@@ -265,6 +265,37 @@ def index_ver_info(id):
     
     cursor.close()  # Cerrar el cursor
     return render_template('/modulos/clientes/ver_info.html', arreglo=arreglo)
+
+
+#pagina de login
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        username = request.form['usuario']
+        password = request.form['contraseña']
+        
+        # Conectar a la base de datos y obtener el usuario
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[4].encode('utf-8')):  # El índice 4 es donde está la contraseña
+            # Si la contraseña es correcta, guardar el usuario en la sesión
+            session['usuario'] = user[2]  # El índice 2 es el nombre de usuario
+            session['rol'] = user[6]  # El índice 6 es el rol (admin o usuario)
+
+            flash("Inicio de sesión exitoso", "success")
+            return redirect(url_for('home'))  # Redirige a la página principal o al panel del admin
+
+        else:
+            flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
+
+    return render_template('login.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

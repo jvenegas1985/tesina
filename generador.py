@@ -1,7 +1,7 @@
 from faker import Faker
 import random
 
-faker = Faker('es_ES')  # Localización en español
+faker = Faker('en_US')  # Localización en español
 
 # Función para generar un INSERT por cada residente
 def generar_insert_residentes(n=1000):
@@ -10,23 +10,23 @@ def generar_insert_residentes(n=1000):
         nombre = faker.first_name()
         apellido1 = faker.last_name()
         apellido2 = faker.last_name()
-        cedula = faker.random_number(digits=9, fix_len=True)
+        cedula = faker.random_number(digits=7, fix_len=True)
         fecha_nacimiento = faker.date_of_birth(minimum_age=60, maximum_age=95).strftime('%Y-%m-%d')
-        genero = random.choice(['Masculino', 'Femenino'])
-        estado_civil = random.choice(['Soltero', 'Casado', 'Viudo', 'Divorciado'])
+        genero = random.choice(['Masculino', 'Femenino', 'Otro'])
+        estado_civil = random.choice(['Soltero', 'Casado', 'Viudo', 'Divorciado','Otro'])
         nacionalidad = faker.country()
         direccion = faker.address().replace("\n", ", ")
         telefono_contacto = faker.phone_number()
         contacto_emergencia_nombre = faker.name()
         contacto_emergencia_parentesco = random.choice(['Hijo', 'Hija', 'Nieto', 'Sobrino', 'Hermano', 'Esposo'])
-        contacto_emergencia_telefono = faker.phone_number()
+        contacto_emergencia_telefono = faker.random_number(digits=7, fix_len=True)
         condiciones_medicas = random.choice(['Diabetes', 'Hipertensión', 'Alzheimer', 'Artritis', 'Sano'])
         medicamentos_actuales = random.choice(['Metformina', 'Losartán', 'Paracetamol', 'Ibuprofeno', 'Ninguno'])
         movilidad = random.choice(['Independiente', 'Con ayuda', 'Dependiente'])
         estado_mental = random.choice(['Lúcido', 'Desorientado', 'Demencia'])
         activo = 1
 
-        insert = f"""INSERT INTO residentes
+        insert = f"""INSERT INTO `proyecto`.`residentes`
 (nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad, direccion,
 telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco, contacto_emergencia_telefono,
 condiciones_medicas, medicamentos_actuales, movilidad, estado_mental, activo)

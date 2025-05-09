@@ -1,129 +1,77 @@
 {%include 'header.html'%}
 
 
-<h4>Ver informacion base del cliente</h4>
+
 
 {% set a = arreglo[0] %}
 <form action="/modulos/ver_info.html{{ a.id }}" method="POST" id="ver_info">
 
-  <input type="hidden" name="id" value="{{ a.id }}">
-  <div class="row">
-    <div class="col-5 ">
-      <div class="card">
-        <div class="card-body">
-          <div class="mb-3">
-            
-            <h2><p><strong>Nombre:</strong> {{ a.nombre }} {{ a.apellido1 }} {{ a.apellido2 }}</p></2>
-          </div>          
-          <div class="mb-3">
-            <h4><p><strong>Cedula:</strong> {{ a.cedula }} </p></h4>
-            <div class="mb-3">
-            <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-            <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento" value="{{a.fecha_nacimiento}}" required />
-          </div>
-          <div class="mb-3">
-            <label for="genero" class="form-label">Género</label>
-            <select id="genero" name="genero" class="form-select form-select-sm" required>
-              <option value="" disabled {% if not a.genero %}selected{% endif %}>Seleccione</option>
-              <option value="masculino" {% if a.genero|lower == 'masculino' %}selected{% endif %}>Masculino</option>
-              <option value="femenino" {% if a.genero|lower == 'femenino' %}selected{% endif %}>Femenino</option>
-              <option value="otro" {% if a.genero|lower == 'otro' %}selected{% endif %}>Otro</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="estado_civil" class="form-label">Estado Civil</label>
-            <select id="estado_civil" name="estado_civil" class="form-select form-select-sm" required>
-              <option value="" disabled {% if not a.estado_civil %}selected{% endif %}>Seleccione</option>
-              <option value="soltero" {% if a.estado_civil|lower == 'soltero' %}selected{% endif %}>Soltero</option>
-              <option value="casado" {% if a.estado_civil|lower == 'casado' %}selected{% endif %}>Casado</option>
-              <option value="viudo" {% if a.estado_civil|lower == 'viudo' %}selected{% endif %}>Viudo</option>
-              <option value="divorciado" {% if a.estado_civil|lower == 'divorciado' %}selected{% endif %}>Divorciado</option>
-            </select>
-          </div>
-        </div>
+  <div class="card shadow-lg rounded-4 p-4 mb-4 position-relative">
+    <h4 class="mb-4 text-primary">Información del Solicitante</h4>
+  
+    <!-- Botones -->
+    <div class="position-absolute top-0 end-0 p-3">
+      <a href="" class="btn btn-sm btn-outline-primary me-2">
+        <i class="fas fa-edit"></i> Editar
+      </a>
+      <a href="" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-trash-alt"></i> Eliminar
+      </a>
+    </div>
+  
+    <!-- Datos personales -->
+    <div class="mb-4 mt-1">
+      <h5 class="text-secondary"><i class="fas fa-user-circle"></i> Datos Personales</h5>
+      <div class="row">
+        <div class="col-md-4"><strong><i class="fas fa-user"></i> Nombre:</strong> {{ a.nombre }}</div>
+        <div class="col-md-4"><strong>Apellido 1:</strong> {{ a.apellido1 }}</div>
+        <div class="col-md-4"><strong>Apellido 2:</strong> {{ a.apellido2 }}</div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-4"><strong><i class="fas fa-id-card"></i> Cédula:</strong> {{ a.cedula }}</div>
+        <div class="col-md-4"><strong><i class="fas fa-calendar-alt"></i> Fecha de nacimiento:</strong> {{ a.fecha_nacimiento }}</div>
+        <div class="col-md-4"><strong><i class="fas fa-venus-mars"></i> Género:</strong> {{ a.genero }}</div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-4"><strong><i class="fas fa-heart"></i> Estado civil:</strong> {{ a.estado_civil }}</div>
+        <div class="col-md-4"><strong><i class="fas fa-flag"></i> Nacionalidad:</strong> {{ a.nacionalidad }}</div>
+        <div class="col-md-4"><strong><i class="fas fa-key"></i> ID:</strong> {{ a.id }}</div>
       </div>
     </div>
-
-    <div class="col-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="pais_nacimiento" class="form-label">País de Nacimiento</label>
-            <input type="text" class="form-control" name="pais_nacimiento" value="{{a.nacionalidad}}" id="pais_nacimiento" required />
-          </div>
-          <div class="mb-3">
-            <label for="direccion" class="form-label">Dirección</label>
-            <textarea class="form-control" id="direccion" name="direccion" rows="2" required>{{ a.direccion }}</textarea>
-          </div>
-          <div class="mb-3">
-            <label for="telefono" class="form-label">Teléfono</label>
-            <input type="tel" class="form-control" name="telefono" id="telefono" value="{{a.telefono_contacto}}" required />
-            <small id="telefonoHelp" class="form-text text-muted">Ingrese su número sin guiones.</small>
-          </div>
-          <div class="mb-3">
-            <label for="nombre_contacto_emergencia" class="form-label">Nombre Contacto Emergencia</label>
-            <input type="text" class="form-control" name="nombre_contacto_emergencia" value="{{a.contacto_emergencia_nombre}}" required />
-          </div>
-          <div class="mb-3">
-            <label for="telefono_emergencia" class="form-label">Teléfono Contacto Emergencia</label>
-            <input type="text" class="form-control" name="telefono_emergencia" value="{{a.contacto_emergencia_telefono}}" />
-          </div>
-          <div class="mb-3">
-            <label for="parentesco" class="form-label">Parentesco Contacto Emergencia</label>
-            <input type="text" class="form-control" name="contacto_emergencia_parentesco" value="{{a.contacto_emergencia_parentesco}}" />
-          </div>
-        </div>
+  
+    <!-- Contacto -->
+    <div class="mb-4">
+      <h5 class="text-secondary"><i class="fas fa-phone-alt"></i> Contacto</h5>
+      <div class="row">
+        <div class="col-md-6"><strong><i class="fas fa-map-marker-alt"></i> Dirección:</strong> {{ a.direccion }}</div>
+        <div class="col-md-6"><strong><i class="fas fa-phone"></i> Teléfono:</strong> {{ a.telefono_contacto }}</div>
       </div>
     </div>
-
-    <div class="col-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="condiciones_medicas" class="form-label">Condiciones Médicas</label>
-            <textarea class="form-control" name="condiciones_medicas" rows="3" required>{{a.condiciones_medicas}}</textarea>
-          </div>
-          <div class="mb-3">
-            <label for="medicamentos" class="form-label">Medicamentos</label>
-            <textarea class="form-control" name="medicamentos" rows="3" required>{{a.medicamentos_actuales}}</textarea>
-          </div>
-          <div class="mb-3">
-            <label for="movilidad" class="form-label">Movilidad</label>
-            <select class="form-select form-select-sm" name="movilidad" required>
-              <option value="" disabled {% if not a.movilidad %}selected{% endif %}>Seleccione</option>
-              <option value="Independiente" {% if a.movilidad|lower == 'independiente' %}selected{% endif %}>Independiente</option>
-              <option value="con ayuda" {% if a.movilidad|lower == 'con ayuda' %}selected{% endif %}>Con Ayuda</option>
-              <option value="Dependiente" {% if a.movilidad|lower == 'dependiente' %}selected{% endif %}>Dependiente</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="estado_mental" class="form-label">Estado Mental</label>
-            <select class="form-select form-select-sm" name="estado_mental" required>
-              <option value="" disabled {% if not a.estado_mental %}selected{% endif %}>Seleccione</option>
-              <option value="lucido" {% if a.estado_mental|lower == 'lucido' %}selected{% endif %}>Lúcido</option>
-              <option value="desorientado" {% if a.estado_mental|lower == 'desorientado' %}selected{% endif %}>Desorientado</option>
-              <option value="demencia" {% if a.estado_mental|lower == 'demencia' %}selected{% endif %}>Demencia</option>
-            </select>
-          </div>
-          <div class="text-center">
-            <button type="submit" class="btn btn-primary" form="editar">Editar</button>
-            
-          </div>
-        </div>
+  
+    <!-- Contacto de emergencia -->
+    <div class="mb-4">
+      <h5 class="text-secondary"><i class="fas fa-user-shield"></i> Contacto de Emergencia</h5>
+      <div class="row">
+        <div class="col-md-4"><strong>Nombre:</strong> {{ a.contacto_emergencia_nombre }}</div>
+        <div class="col-md-4"><strong>Parentesco:</strong> {{ a.contacto_emergencia_parentesco }}</div>
+        <div class="col-md-4"><strong>Teléfono:</strong> {{ a.contacto_emergencia_telefono }}</div>
+      </div>
+    </div>
+  
+    <!-- Información médica -->
+    <div>
+      <h5 class="text-secondary"><i class="fas fa-medkit"></i> Salud</h5>
+      <div class="row">
+        <div class="col-md-4"><strong>Condiciones médicas:</strong> {{ a.condiciones_medicas }}</div>
+        <div class="col-md-4"><strong>Medicamentos actuales:</strong> {{ a.medicamentos_actuales }}</div>
+        <div class="col-md-4"><strong>Movilidad:</strong> {{ a.movilidad }}</div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-6"><strong>Estado mental:</strong> {{ a.estado_mental }}</div>
       </div>
     </div>
   </div>
+  
+ 
 </form>
-
-
-
-
-
-
-
-
-
-
-
-
 {%include 'footer.html'%}
