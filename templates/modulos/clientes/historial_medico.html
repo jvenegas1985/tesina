@@ -1,0 +1,39 @@
+{% include 'header.html' %}
+
+<div class="container mt-5 pt-4">
+  <h2 class="mb-4 text-center">Gestión de Salud - Registro</h2>
+
+  <a href="/historial_medico" class="btn btn-sm btn-outline-success mb-4">
+    <i class="fas fa-heartbeat"></i> Ver Historial Médico
+  </a>
+
+  {% for a in historial %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/historial_medico/{{ a.id }}/actualizar" method="POST">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="fecha{{ a.id }}" class="form-label">Fecha</label>
+            <input type="date" class="form-control" id="fecha{{ a.id }}" name="fecha" value="{{ a.fecha }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="diagnostico{{ a.id }}" class="form-label">Diagnóstico</label>
+            <input type="text" class="form-control" id="diagnostico{{ a.id }}" name="diagnostico" value="{{ a.diagnostico }}" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="medico{{ a.id }}" class="form-label">Médico Tratante</label>
+            <input type="text" class="form-control" id="medico{{ a.id }}" name="medico" value="{{ a.medico }}">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="notas{{ a.id }}" class="form-label">Notas Adicionales</label>
+          <textarea class="form-control" id="notas{{ a.id }}" name="notas" rows="3">{{ a.notas }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Actualizar Registro</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% include 'footer.html' %}

@@ -299,15 +299,26 @@ def login():
 
 
 # Mostrar historial médico
-@app.route('/historial_medico/<int:residente_id>', methods=['GET'])
+@app.route('/historial_medico/<string:id>', methods=['GET'])
 def ver_historial_medico(id):
     cursor = db.database.cursor()
-    cursor = db.cursor(dictionary=True)
+
+    # Obtener los datos del residente
+    cursor.execute("SELECT nombre FROM residentes WHERE id = %s", (id,))
+    residente = cursor.fetchone()  # Esto devuelve una tupla como ('Juan Pérez',)
+
+    # Obtener historial médico
     cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s ORDER BY fecha DESC", (id,))
     historial = cursor.fetchall()
-    cursor.close()
-    return render_template('historial_medico.html', historial=historial, residente_id=id)
 
+    cursor.close()
+
+    return render_template(
+        'modulos/clientes/historial_medico.html',
+        historial=historial,
+        id=id,
+        residente_nombre=residente[0] if residente else "Desconocido"
+    )
 
 # Agregar nueva entrada
 @app.route('/historial_medico/agregar', methods=['POST'])
@@ -328,7 +339,7 @@ def agregar_historial_medico():
     conn.close()
 
     flash('Registro guardado correctamente.', 'success')
-    return redirect(url_for('ver_historial_medico', residente_id=residente_id))
+    return redirect(url_for('ver_historial_medico', id=id))
 
 
 
