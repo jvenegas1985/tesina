@@ -9,15 +9,23 @@
   <div class="card shadow-lg rounded-4 p-4 mb-4 position-relative">
     <h4 class="mb-4 text-primary">Información del Solicitante</h4>
   
-    <!-- Botones -->
-    <div class="position-absolute top-0 end-0 p-3">
-      <a href="" class="btn btn-sm btn-outline-primary me-2">
-        <i class="fas fa-edit"></i> Editar
-      </a>
-      <a href="" class="btn btn-sm btn-outline-danger">
-        <i class="fas fa-trash-alt"></i> Eliminar
-      </a>
-    </div>
+  <!-- Botones -->
+<div class="position-absolute top-0 end-0 p-3">
+  <!-- Botón Editar -->
+  <a href="/edit/{{ a.id }}" class="btn btn-sm btn-outline-primary me-2">
+    <i class="fas fa-edit"></i> Editar
+  </a>
+
+  <!-- Botón Eliminar -->
+  <a href="/eliminar/{{ a.id }}" class="btn btn-sm btn-outline-danger">
+    <i class="fas fa-trash-alt"></i> Eliminar
+  </a>
+
+  <!-- Botón de Gestión de Salud (Historial Médico) -->
+  <a href="/historial_medico/{{ a.id }}" class="btn btn-sm btn-outline-success">
+    <i class="fas fa-heartbeat"></i> Gestión de Salud
+  </a>
+</div>
   
     <!-- Datos personales -->
     <div class="mb-4 mt-1">

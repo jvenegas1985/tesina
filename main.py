@@ -1,6 +1,7 @@
 import mysql.connector
-from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash,session
+from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash, session
 import database as db
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -272,30 +273,66 @@ def index_ver_info(id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Obtener los datos del formulario
+        # Obtener datos del formulario
         username = request.form['usuario']
         password = request.form['contraseña']
         
-        # Conectar a la base de datos y obtener el usuario
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Conexión a la base de datos
+        
+        cursor=db.database.cursor()
         cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (username,))
         user = cursor.fetchone()
-        conn.close()
+        cursor.close()
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[4].encode('utf-8')):  # El índice 4 es donde está la contraseña
-            # Si la contraseña es correcta, guardar el usuario en la sesión
-            session['usuario'] = user[2]  # El índice 2 es el nombre de usuario
-            session['rol'] = user[6]  # El índice 6 es el rol (admin o usuario)
-
+        if user and password == user[4]:  # Comparación directa (índice 4 = contraseña)
+            session['usuario'] = user[2]  # Nombre
+            session['rol'] = user[6]      # Rol (admin o usuario)
             flash("Inicio de sesión exitoso", "success")
-            return redirect(url_for('home'))  # Redirige a la página principal o al panel del admin
-
+            return redirect(url_for('/'))
         else:
             flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
 
     return render_template('login.html')
 
+# MODULO HISTORIAL MEDICO
+
+
+
+# Mostrar historial médico
+@app.route('/historial_medico/<int:residente_id>', methods=['GET'])
+def ver_historial_medico(id):
+    cursor = db.database.cursor()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s ORDER BY fecha DESC", (id,))
+    historial = cursor.fetchall()
+    cursor.close()
+    return render_template('historial_medico.html', historial=historial, residente_id=id)
+
+
+# Agregar nueva entrada
+@app.route('/historial_medico/agregar', methods=['POST'])
+def agregar_historial_medico():
+    residente_id = request.form.get('residente_id')
+    fecha = request.form.get('fecha')
+    diagnostico = request.form.get('diagnostico')
+    medico = request.form.get('medico')
+    notas = request.form.get('notas')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO historial_medico (residente_id, fecha, diagnostico, medico, notas)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (residente_id, fecha, diagnostico, medico, notas))
+    conn.commit()
+    conn.close()
+
+    flash('Registro guardado correctamente.', 'success')
+    return redirect(url_for('ver_historial_medico', residente_id=residente_id))
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
