@@ -1,4 +1,4 @@
-{% include 'header.html' %}
+{% include '/modulos/clientes/admin_header.html' %}
 <h4>Agregar Nuevo Registro</h4>
 
 
@@ -189,7 +189,7 @@
 
           </div>
           <div class="modal-footer">
-            <a href="{{ url_for('index_clientes') }}" class="btn btn-success" id="closeModalAndRedirect">Cerrar</a>
+            <a href="{{ url_for('index_residentes') }}" class="btn btn-success" id="closeModalAndRedirect">Cerrar</a>
 
     <script>
       document.getElementById('closeModalAndRedirect').addEventListener('click', function() {
@@ -199,7 +199,7 @@
 
         // Redirigir después de cerrar el modal
         setTimeout(function() {
-          window.location.href = '{{ url_for('index_clientes') }}';
+          window.location.href = '{{ url_for('index_residentes') }}';
         }, 100); // Retraso para que cierre el modal primero
       });
     </script>

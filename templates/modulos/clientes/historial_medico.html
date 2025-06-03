@@ -1,4 +1,4 @@
-{% include 'header.html' %}
+{% include '/modulos/clientes/admin_header.html' %}
 
 <div class="container mt-1 pt-4">
   <h5 class="mb-4 text-center">Historial Médico de Residente</h5>
@@ -7,15 +7,20 @@
     <i class="fas fa-arrow-left"></i> Regresar
   </a>
 
+  <div id="alertaExito" class="alert alert-success d-none text-center" role="alert">
+    Registro eliminado correctamente.
+  </div>
+
   <div class="row">
-    <!-- Columna izquierda: Historial Médico -->
+    <!-- Historial Médico -->
     <div class="col-md-8">
       <div class="card shadow-lg rounded-4 mb-4">
         <div class="card-body">
           <h6 class="card-title text-primary">Historial Médico</h6>
           <p class="text-muted">Registros médicos del residente.</p>
+
           <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped align-middle">
               <thead class="table-light">
                 <tr>
                   <th>Fecha</th>
@@ -28,11 +33,11 @@
                 {% for registro in historial %}
                 <tr>
                   <td>{{ registro.fecha }}</td>
-                  <td>{{ registro.diagnostico }}</td>
-                  <td>{{ registro.observaciones }}</td>
+                  <td>{{ registro.diagnostico | e }}</td>
+                  <td>{{ registro.observaciones | e }}</td>
                   <td class="text-center">
-                    <a href="/historial_medico/{{ registro.id }}/editar" class="btn btn-sm btn-outline-warning">✏️</a>
-                    <a href="/historial_medico/{{ registro.id }}/eliminar" class="btn btn-sm btn-outline-danger">🗑️</a>
+                    <a href="/historial_medico/{{ registro.id }}/editar" class="btn btn-sm btn-outline-warning" title="Editar">✏️</a>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar" data-id="{{ registro.id }}" data-bs-toggle="modal" data-bs-target="#modalConfirmarEliminar" title="Eliminar">🗑️</button>
                   </td>
                 </tr>
                 {% else %}
@@ -41,23 +46,25 @@
               </tbody>
             </table>
           </div>
+
           <div class="text-center mt-3">
-            <a href="/historial_medico/nuevo/{{ residente_id }}" class="btn btn-outline-success">
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalAgregarRegistro">
               ➕ Agregar Registro Médico
-            </a>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Columna derecha: Medicación -->
+    <!-- Medicación -->
     <div class="col-md-4">
       <div class="card shadow-lg rounded-4 mb-4">
         <div class="card-body">
           <h6 class="card-title text-primary">Medicación Actual</h6>
           <p class="text-muted">Medicamentos asignados actualmente.</p>
+
           <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped align-middle">
               <thead class="table-light">
                 <tr>
                   <th>Medicamento</th>
@@ -69,12 +76,12 @@
               <tbody>
                 {% for medicamento in medicacion %}
                 <tr>
-                  <td>{{ medicamento.medicamento }}</td>
-                  <td>{{ medicamento.dosis }}</td>
-                  <td>{{ medicamento.frecuencia }}</td>
+                  <td>{{ medicamento.medicamento | e }}</td>
+                  <td>{{ medicamento.dosis | e }}</td>
+                  <td>{{ medicamento.frecuencia | e }}</td>
                   <td class="text-center">
-                    <a href="/medicacion/{{ medicamento.id }}/editar" class="btn btn-sm btn-outline-warning">✏️</a>
-                    <a href="/medicacion/{{ medicamento.id }}/eliminar" class="btn btn-sm btn-outline-danger">🗑️</a>
+                    <a href="/medicacion/{{ medicamento.id }}/editar" class="btn btn-sm btn-outline-warning" title="Editar">✏️</a>
+                    <a href="/medicacion/{{ medicamento.id }}/eliminar" class="btn btn-sm btn-outline-danger" title="Eliminar">🗑️</a>
                   </td>
                 </tr>
                 {% else %}
@@ -83,6 +90,7 @@
               </tbody>
             </table>
           </div>
+
           <div class="text-center mt-3">
             <a href="/medicacion/nueva/{{ residente_id }}" class="btn btn-outline-success">
               ➕ Agregar Medicamento
@@ -93,5 +101,163 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Agregar Registro -->
+<div class="modal fade" id="modalAgregarRegistro" tabindex="-1" aria-labelledby="modalAgregarRegistroLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formAgregarRegistro" method="POST" action="/historial_medico/{{ residente_id }}/nuevo">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAgregarRegistroLabel">Agregar Registro Médico</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="fecha" class="form-label">Fecha</label>
+            <input type="date" class="form-control" id="fecha" name="fecha" required>
+          </div>
+          <div class="mb-3">
+            <label for="diagnostico" class="form-label">Diagnóstico</label>
+            <textarea class="form-control" id="diagnostico" name="diagnostico" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="observaciones" class="form-label">Observaciones</label>
+            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+          </div>
+          <div id="mensajeError" class="text-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-labelledby="modalConfirmarEliminarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmarEliminarLabel">Confirmar Eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro que quieres eliminar este registro?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnEliminarConfirmar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function obtenerFechaHoy() {
+    const hoy = new Date();
+    return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+  }
+
+  document.getElementById('modalAgregarRegistro').addEventListener('show.bs.modal', () => {
+    document.getElementById('fecha').value = obtenerFechaHoy();
+  });
+
+  document.getElementById('formAgregarRegistro').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const mensajeError = document.getElementById('mensajeError');
+
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        mensajeError.textContent = data.error;
+        mensajeError.classList.remove('d-none');
+      } else {
+        mensajeError.classList.add('d-none');
+        // Ocultar modal correctamente
+        const modalAgregar = bootstrap.Modal.getInstance(document.getElementById('modalAgregarRegistro'));
+        modalAgregar.hide();
+
+        // Limpiar backdrop si queda pegado
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style = '';
+
+        form.reset();
+
+        const tbody = document.querySelector('table.table tbody');
+        const nuevoRegistro = document.createElement('tr');
+        nuevoRegistro.innerHTML = `
+          <td>${data.fecha}</td>
+          <td>${data.diagnostico}</td>
+          <td>${data.observaciones}</td>
+          <td class="text-center">
+            <a href="/historial_medico/${data.id}/editar" class="btn btn-sm btn-outline-warning">✏️</a>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${data.id}" data-bs-toggle="modal" data-bs-target="#modalConfirmarEliminar">🗑️</button>
+          </td>`;
+        const sinRegistros = tbody.querySelector('td[colspan]');
+        if (sinRegistros) sinRegistros.parentElement.remove();
+        tbody.appendChild(nuevoRegistro);
+      }
+    })
+    .catch(() => {
+      mensajeError.textContent = 'Error al guardar el registro.';
+      mensajeError.classList.remove('d-none');
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let idAEliminar = null;
+    let filaAEliminar = null;
+    const modalEliminar = document.getElementById('modalConfirmarEliminar');
+    const alertaExito = document.getElementById('alertaExito');
+
+    modalEliminar.addEventListener('show.bs.modal', (event) => {
+      const btn = event.relatedTarget;
+      idAEliminar = btn.getAttribute('data-id');
+      filaAEliminar = btn.closest('tr');
+    });
+
+    document.getElementById('btnEliminarConfirmar').addEventListener('click', () => {
+      if (!idAEliminar) return;
+
+      fetch(`/historial_medico/${idAEliminar}/eliminar`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const modal = bootstrap.Modal.getInstance(modalEliminar);
+          modal.hide();
+
+          modalEliminar.addEventListener('hidden.bs.modal', function onHidden() {
+            if (filaAEliminar) filaAEliminar.remove();
+            alertaExito.classList.remove('d-none');
+            setTimeout(() => alertaExito.classList.add('d-none'), 3000);
+
+            // Limpiar backdrop después de cerrar modal eliminar
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style = '';
+
+            modalEliminar.removeEventListener('hidden.bs.modal', onHidden);
+          });
+        } else {
+          alert('Error al eliminar: ' + (data.error || 'Error desconocido'));
+        }
+      })
+      .catch(() => alert('Error en la comunicación con el servidor.'));
+    });
+  });
+</script>
 
 {% include 'footer.html' %}

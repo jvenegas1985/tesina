@@ -1,39 +1,81 @@
 import mysql.connector
-from flask import jsonify, Flask,make_response, redirect, url_for, render_template, request, flash, session
-import database as db
-
+from flask import jsonify, make_response, Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+import database as db  # suponiendo que aquí tienes la conexión db.database
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
 
-# Función para obtener la conexión a la base de datos
-def get_db_connection():
-    connection = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='Usuario1',
-        database='proyecto'
-    )
-    return connection
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # página a redirigir si no está autenticado
 
-# Ruta principal (home)
-@app.route('/', methods=['GET', 'POST'])
-def home():
+class User(UserMixin):
+    def __init__(self, id, username, password, rol, nombre):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.rol = rol
+        self.nombre = nombre
+
+
+@login_manager.user_loader
+def load_user(user_id):
     cursor = db.database.cursor()
-    cursor.execute("""
-            SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion 
-            FROM residentes 
-            ORDER BY id DESC LIMIT 9 OFFSET 0
-        """)
-    datos = cursor.fetchall()
-    return render_template('index.html')
+    cursor.execute("SELECT id, username, password, rol, nombre FROM usuarios WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    if user:
+        return User(id=user[0], username=user[1], password=user[2], rol=user[3], nombre=user[4])
+    return None
+
+
+
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)  # usar current_user de flask_login
+
+@app.route('/', methods=['GET'])
+def index_publico():
+    return render_template('index_publico.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['usuario']
+        password = request.form['contraseña']
+        cursor = db.database.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        if user and password == user[3]:  # user[3] es password
+            user_obj = user_obj = User(id=user[0], username=user[1], password=user[2], nombre=user[3], rol=user[4])
+
+            login_user(user_obj)  # <-- Esto inicia la sesión en Flask-Login
+            flash("Inicio de sesión exitoso", "success")
+            return redirect(url_for('index_admin'))
+        else:
+            flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("Sesión cerrada correctamente", "success")
+    return redirect(url_for('login'))
+
+@app.route('/index_admin')
+@login_required
+def index_admin():
+    return render_template('index.html', usuario=current_user.username, rol=current_user.rol)
 
 
 
 
-
-@app.route('/clientes')
-def index_clientes():
+@app.route('/residentes',methods=['GET'])
+@login_required
+def index_residentes():
     try:
         cursor = db.database.cursor()
         cursor.execute("""
@@ -44,11 +86,13 @@ def index_clientes():
         datos = cursor.fetchall()
         columnames = [col[0] for col in cursor.description]
         arreglo = [dict(zip(columnames, record)) for record in datos]
+    except Exception as e:
+        print("ERROR EN RESIDENTES:", e)
+        arreglo = []
     finally:
         cursor.close()
-        
 
-    response = make_response(render_template('modulos/clientes/index.html', residentes=arreglo))
+    response = make_response(render_template('modulos/clientes/residentes.html', residentes=arreglo))
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
@@ -57,6 +101,7 @@ def index_clientes():
 
 # Ruta para crear un nuevo cliente
 @app.route('/create')
+@login_required
 def index_create():
     return render_template('modulos/clientes/create.html')
 
@@ -64,6 +109,7 @@ def index_create():
 
 
 @app.route('/edit/<string:id>', methods=['GET'])
+@login_required
 def index_editar(id):  # Asegúrate de que se reciba `id`
     cursor = db.database.cursor()  # Establecer conexión
     cursor.execute("SELECT * FROM residentes WHERE id = %s", (id,))
@@ -78,6 +124,7 @@ def index_editar(id):  # Asegúrate de que se reciba `id`
 
 
 @app.route('/eliminar/<string:id>',methods=['GET', 'POST'])
+@login_required
 def eliminar_residente(id):
     cursor = db.database.cursor() # Establecer conexión
     cursor.execute("DELETE from RESIDENTES where id= %s", (id,))
@@ -85,13 +132,14 @@ def eliminar_residente(id):
     cursor.close()  # Cerrar el cursor  
     
   
-    return redirect(url_for('index_clientes'))
+    return redirect(url_for('index_residentes'))
 
 
 
 
 # Ruta para guardar un nuevo cliente
 @app.route('/modulos/clientes/create/guardar', methods=['POST'])
+@login_required
 def btn_cliente_guardar():
    
         nombre = request.form.get('nombre', '').strip().upper()
@@ -149,6 +197,7 @@ def btn_cliente_guardar():
 
 
 @app.route('/modulos/clientes/create/edit/<string:id>', methods=['POST'])
+@login_required
 def btn_cliente_editar_guardar(id):
     # Obtener datos del formulario
     nombre = request.form.get('nombre', '').strip().upper()
@@ -220,8 +269,9 @@ def btn_cliente_editar_guardar(id):
 ##busqueda por dato ingresado
 
 @app.route('/buscar')
+@login_required
 def buscar():
-    query = request.args.get('q')
+    query = request.args.get('q', '').strip()
     if not query:
         return jsonify([])
 
@@ -239,22 +289,24 @@ def buscar():
             cedula LIKE %s
         LIMIT 20
     """
-    cursor = db.database.cursor()  # Establecer conexión
-    cursor.execute(sql, (like_query,) * 6)
-    datos = cursor.fetchall()
-    arreglo = []
-    columnames = [col[0] for col in cursor.description]
-    for record in datos:
-        arreglo.append(dict(zip(columnames, record)))
-    
-    cursor.close()
+    cursor = db.database.cursor()
+    try:
+        cursor.execute(sql, (like_query,) * 6)
+        datos = cursor.fetchall()
+        columnas = [col[0] for col in cursor.description]
+        arreglo = [dict(zip(columnas, registro)) for registro in datos]
+    finally:
+        cursor.close()
+
     return jsonify(arreglo)
 
 
 
 
 
+
 @app.route('/ver_info/<string:id>', methods=['GET'])
+@login_required
 def index_ver_info(id):
     cursor = db.database.cursor()  # Establecer conexión
     cursor.execute("SELECT * FROM residentes WHERE id = %s", (id,))
@@ -268,31 +320,7 @@ def index_ver_info(id):
     return render_template('/modulos/clientes/ver_info.html', arreglo=arreglo)
 
 
-#pagina de login
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Obtener datos del formulario
-        username = request.form['usuario']
-        password = request.form['contraseña']
-        
-        # Conexión a la base de datos
-        
-        cursor=db.database.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (username,))
-        user = cursor.fetchone()
-        cursor.close()
-
-        if user and password == user[4]:  # Comparación directa (índice 4 = contraseña)
-            session['usuario'] = user[2]  # Nombre
-            session['rol'] = user[6]      # Rol (admin o usuario)
-            flash("Inicio de sesión exitoso", "success")
-            return redirect(url_for('/'))
-        else:
-            flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
-
-    return render_template('login.html')
 
 # MODULO HISTORIAL MEDICO
 
@@ -300,6 +328,7 @@ def login():
 
 # Mostrar historial médico
 @app.route('/historial_medico/<int:id>')
+@login_required
 def historial_medico(id):
     cursor = db.database.cursor(dictionary=True)
     cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s", (id,))
@@ -309,8 +338,12 @@ def historial_medico(id):
     cursor.close()
     return render_template('/modulos/clientes/historial_medico.html', historial=historial, medicacion=medicacion ,residente_id=id)
 
+
+
+
 # Ruta para actualizar el historial médico
 @app.route('/historial_medico/<int:id>/actualizar', methods=['POST'])
+@login_required
 def actualizar_historial_medico(id):
     # Recibimos los datos del formulario
     fecha = request.form.get('fecha')
@@ -338,7 +371,77 @@ def actualizar_historial_medico(id):
         return "Hubo un error al actualizar el registro."
 
     return redirect(url_for('historial_medico'))  # Redirigir a la lista de historial
+
+
+
+@app.route('/historial_medico/<int:residente_id>/nuevo', methods=['POST'])
+@login_required
+def agregar_historial_medico(residente_id):
+    fecha = request.form.get('fecha')
+    diagnostico = request.form.get('diagnostico', '').strip()
+    observaciones = request.form.get('observaciones', '').strip()
+
+    if not fecha or not diagnostico:
+        # Para AJAX devuelve JSON con error
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Fecha y diagnóstico son obligatorios'}), 400
+        flash('Fecha y diagnóstico son obligatorios', 'danger')
+        return redirect(url_for('historial_medico', id=residente_id))
+
+    cursor = db.database.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO historial_medico (residente_id, fecha, diagnostico, observaciones)
+            VALUES (%s, %s, %s, %s)
+        """, (residente_id, fecha, diagnostico.upper(), observaciones.upper()))
+        db.database.commit()
+        nuevo_id = cursor.lastrowid
+    except Exception as e:
+        db.database.rollback()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Error al guardar registro'}), 500
+        flash('Error al guardar registro: ' + str(e), 'danger')
+        return redirect(url_for('historial_medico', id=residente_id))
+    finally:
+        cursor.close()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Devolver datos para actualizar tabla en frontend
+        return jsonify({
+            'success': True,
+            'id': nuevo_id,
+            'fecha': fecha,
+            'diagnostico': diagnostico.upper(),
+            'observaciones': observaciones.upper()
+        })
+
+    flash('Registro médico agregado exitosamente', 'success')
+    return redirect(url_for('historial_medico', id=residente_id))
+
+
+
+
+
+
+@app.route('/historial_medico/<int:id>/eliminar', methods=['POST'])
+@login_required
+def eliminar_historial(id):
+    cursor = db.database.cursor()
+    try:
+        cursor.execute("DELETE FROM historial_medico WHERE id = %s", (id,))
+        db.database.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.database.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cursor.close()
+
+
+
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(port=5000, debug=True)
 
 
