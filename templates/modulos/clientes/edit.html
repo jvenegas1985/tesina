@@ -88,14 +88,6 @@
       <div class="card">
         <div class="card-body">
           <div class="mb-5">
-            <label for="condiciones_medicas" class="form-label"><i class="bi bi-clipboard-heart"></i> Condiciones Médicas</label>
-            <textarea class="form-control" name="condiciones_medicas" rows="3" required>{{a.condiciones_medicas}}</textarea>
-          </div>
-          <div class="mb-5">
-            <label for="medicamentos" class="form-label"><i class="bi bi-capsule"></i> Medicamentos</label>
-            <textarea class="form-control" name="medicamentos" rows="3" required>{{a.medicamentos_actuales}}</textarea>
-          </div>
-          <div class="mb-5">
             <label for="movilidad" class="form-label"><i class="bi bi-person-walking"></i> Movilidad</label>
             <select class="form-select" name="movilidad" required>
               <option value="" disabled {% if not a.movilidad %}selected{% endif %}>Seleccione</option>
@@ -113,9 +105,13 @@
               <option value="demencia" {% if a.estado_mental|lower == 'demencia' %}selected{% endif %}>Demencia</option>
             </select>
           </div>
+
+         
+          </div>
+
           <div class="text-center">
-            <button type="submit" class="btn btn-primary" form="editar">
-              <i class="bi bi-check-circle"></i> Aplicar Cambios
+            <button type="submit" class="btn btn-outline-primary btn-lg px-4 rounded-pill shadow-sm" form="editar">
+              <i class="bi bi-check-circle-fill me-1"></i> Aplicar Cambios
             </button>
           </div>
         </div>

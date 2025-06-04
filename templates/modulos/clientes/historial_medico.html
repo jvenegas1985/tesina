@@ -1,7 +1,9 @@
 {% include '/modulos/clientes/admin_header.html' %}
 
 <div class="container mt-1 pt-4">
-  <h5 class="mb-4 text-center">Historial Médico de Residente</h5>
+<h5 class="mb-4 text-center">Historial Médico de {{ residente.nombre_completo | e }}</h5>
+
+
 
   <a href="/ver_info/{{ residente_id }}" class="btn btn-sm btn-outline-secondary mb-3">
     <i class="fas fa-arrow-left"></i> Regresar
@@ -13,7 +15,7 @@
 
   <div class="row">
     <!-- Historial Médico -->
-    <div class="col-md-8">
+    <div class="col-md-12">
       <div class="card shadow-lg rounded-4 mb-4">
         <div class="card-body">
           <h6 class="card-title text-primary">Historial Médico</h6>
@@ -32,11 +34,23 @@
               <tbody>
                 {% for registro in historial %}
                 <tr>
-                  <td>{{ registro.fecha }}</td>
+                  <td>{{ registro.fecha.strftime('%d/%m/%Y') if registro.fecha else '' }}</td>
+
                   <td>{{ registro.diagnostico | e }}</td>
                   <td>{{ registro.observaciones | e }}</td>
                   <td class="text-center">
-                    <a href="/historial_medico/{{ registro.id }}/editar" class="btn btn-sm btn-outline-warning" title="Editar">✏️</a>
+                    <button 
+  type="button" 
+  class="btn btn-sm btn-outline-warning btn-editar" 
+  data-id="{{ registro.id }}"
+  data-fecha="{{ registro.fecha.strftime('%Y-%m-%d') if registro.fecha else '' }}"
+  data-diagnostico="{{ registro.diagnostico | e }}"
+  data-observaciones="{{ registro.observaciones | e }}"
+  data-bs-toggle="modal" 
+  data-bs-target="#modalEditarRegistro"
+  title="Editar"
+>✏️</button>
+
                     <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar" data-id="{{ registro.id }}" data-bs-toggle="modal" data-bs-target="#modalConfirmarEliminar" title="Eliminar">🗑️</button>
                   </td>
                 </tr>
@@ -56,52 +70,7 @@
       </div>
     </div>
 
-    <!-- Medicación -->
-    <div class="col-md-4">
-      <div class="card shadow-lg rounded-4 mb-4">
-        <div class="card-body">
-          <h6 class="card-title text-primary">Medicación Actual</h6>
-          <p class="text-muted">Medicamentos asignados actualmente.</p>
-
-          <div class="table-responsive">
-            <table class="table table-striped align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Medicamento</th>
-                  <th>Dosis</th>
-                  <th>Frecuencia</th>
-                  <th class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for medicamento in medicacion %}
-                <tr>
-                  <td>{{ medicamento.medicamento | e }}</td>
-                  <td>{{ medicamento.dosis | e }}</td>
-                  <td>{{ medicamento.frecuencia | e }}</td>
-                  <td class="text-center">
-                    <a href="/medicacion/{{ medicamento.id }}/editar" class="btn btn-sm btn-outline-warning" title="Editar">✏️</a>
-                    <a href="/medicacion/{{ medicamento.id }}/eliminar" class="btn btn-sm btn-outline-danger" title="Eliminar">🗑️</a>
-                  </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="4" class="text-center">No hay medicación registrada.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-
-          <div class="text-center mt-3">
-            <a href="/medicacion/nueva/{{ residente_id }}" class="btn btn-outline-success">
-              ➕ Agregar Medicamento
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
+    
 <!-- Modal Agregar Registro -->
 <div class="modal fade" id="modalAgregarRegistro" tabindex="-1" aria-labelledby="modalAgregarRegistroLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -129,6 +98,39 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Modal Editar Registro -->
+<div class="modal fade" id="modalEditarRegistro" tabindex="-1" aria-labelledby="modalEditarRegistroLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formEditarRegistro" method="POST">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalEditarRegistroLabel">Editar Registro Médico</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editarId" name="id" value="">
+          <div class="mb-3">
+            <label for="editarFecha" class="form-label">Fecha</label>
+            <input type="date" class="form-control" id="editarFecha" name="fecha" required>
+          </div>
+          <div class="mb-3">
+            <label for="editarDiagnostico" class="form-label">Diagnóstico</label>
+            <textarea class="form-control" id="editarDiagnostico" name="diagnostico" rows="3" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="editarObservaciones" class="form-label">Observaciones</label>
+            <textarea class="form-control" id="editarObservaciones" name="observaciones" rows="3"></textarea>
+          </div>
+          <div id="mensajeErrorEditar" class="text-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         </div>
       </div>
     </form>
@@ -169,6 +171,7 @@
     const form = event.target;
     const formData = new FormData(form);
     const mensajeError = document.getElementById('mensajeError');
+    location.reload()
 
     fetch(form.action, {
       method: 'POST',
@@ -185,13 +188,14 @@
         // Ocultar modal correctamente
         const modalAgregar = bootstrap.Modal.getInstance(document.getElementById('modalAgregarRegistro'));
         modalAgregar.hide();
+        location.reload()
 
         // Limpiar backdrop si queda pegado
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
         document.body.style = '';
 
-        form.reset();
+        location.reload()
 
         const tbody = document.querySelector('table.table tbody');
         const nuevoRegistro = document.createElement('tr');
@@ -258,6 +262,78 @@
       .catch(() => alert('Error en la comunicación con el servidor.'));
     });
   });
+
+  document.querySelectorAll('.btn-editar').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('editarId').value = btn.dataset.id;
+    document.getElementById('editarFecha').value = btn.dataset.fecha;
+    document.getElementById('editarDiagnostico').value = btn.dataset.diagnostico;
+    document.getElementById('editarObservaciones').value = btn.dataset.observaciones;
+    
+    document.getElementById('formEditarRegistro').action = `/historial_medico/${btn.dataset.id}/editar`;
+  });
+});
+
+document.getElementById('formEditarRegistro').addEventListener('submit', function(event) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  const mensajeError = document.getElementById('mensajeErrorEditar');
+
+  fetch(form.action, {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      mensajeError.textContent = data.error;
+      mensajeError.classList.remove('d-none');
+    } else {
+      mensajeError.classList.add('d-none');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarRegistro'));
+      modal.hide();
+
+      // Actualizar la fila de la tabla
+      const fila = document.querySelector(`button[data-id="${data.id}"]`).closest('tr');
+      fila.innerHTML = `
+        <td>${data.fecha}</td>
+        <td>${data.diagnostico}</td>
+        <td>${data.observaciones}</td>
+        <td class="text-center">
+          <button 
+            type="button" 
+            class="btn btn-sm btn-outline-warning btn-editar" 
+            data-id="${data.id}"
+            data-fecha="${data.fechaISO}"
+            data-diagnostico="${data.diagnostico}"
+            data-observaciones="${data.observaciones}"
+            data-bs-toggle="modal" 
+            data-bs-target="#modalEditarRegistro"
+            title="Editar"
+          >✏️</button>
+          <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${data.id}" data-bs-toggle="modal" data-bs-target="#modalConfirmarEliminar">🗑️</button>
+        </td>
+      `;
+
+      // Reasignar el listener al nuevo botón editar
+      fila.querySelector('.btn-editar').addEventListener('click', () => {
+        document.getElementById('editarId').value = data.id;
+        document.getElementById('editarFecha').value = data.fechaISO;
+        document.getElementById('editarDiagnostico').value = data.diagnostico;
+        document.getElementById('editarObservaciones').value = data.observaciones;
+        document.getElementById('formEditarRegistro').action = `/historial_medico/${data.id}/editar`;
+      });
+    }
+  })
+  .catch(() => {
+    mensajeError.textContent = 'Error al actualizar el registro.';
+    mensajeError.classList.remove('d-none');
+  });
+});
+
+  
 </script>
 
 {% include 'footer.html' %}

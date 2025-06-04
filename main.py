@@ -2,6 +2,8 @@ import mysql.connector
 from flask import jsonify, make_response, Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import database as db  # suponiendo que aquí tienes la conexión db.database
+from datetime import datetime
+
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -39,24 +41,40 @@ def inject_user():
 def index_publico():
     return render_template('index_publico.html')
 
+from flask import session
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['usuario']
-        password = request.form['contraseña']
+        username = request.form['usuario']       
+        password = request.form['contraseña']    
+        
         cursor = db.database.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE username = %s", (username,))
+        cursor.execute("SELECT id, username, password, rol, nombre FROM usuarios WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
-        if user and password == user[3]:  # user[3] es password
-            user_obj = user_obj = User(id=user[0], username=user[1], password=user[2], nombre=user[3], rol=user[4])
 
-            login_user(user_obj)  # <-- Esto inicia la sesión en Flask-Login
+        if user and password == user[2]:
+            user_obj = User(
+                id=user[0],
+                username=user[1],
+                password=user[2],
+                rol=user[3],
+                nombre=user[4]
+            )
+            login_user(user_obj)
+
+            # Guardamos el rol en session para que esté disponible en las plantillas
+            session['rol'] = user_obj.rol  
+            session['nombre'] = user_obj.nombre  # si quieres también el nombre
+
             flash("Inicio de sesión exitoso", "success")
             return redirect(url_for('index_admin'))
         else:
             flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
+
     return render_template('login.html')
+
 
 @app.route('/logout')
 @login_required
@@ -79,7 +97,7 @@ def index_residentes():
     try:
         cursor = db.database.cursor()
         cursor.execute("""
-            SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion 
+            SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion, activo 
             FROM residentes 
             ORDER BY id DESC LIMIT 20 OFFSET 0
         """)
@@ -141,58 +159,128 @@ def eliminar_residente(id):
 @app.route('/modulos/clientes/create/guardar', methods=['POST'])
 @login_required
 def btn_cliente_guardar():
-   
-        nombre = request.form.get('nombre', '').strip().upper()
-        apellido1 = request.form.get('apellido1', '').strip().upper()
-        apellido2 = request.form.get('apellido2', '').strip().upper()
-        cedula = request.form.get('cedula', '').strip()
-        fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
-        genero = request.form.get('genero', '').strip().upper()
-        estado_civil = request.form.get('estado_civil', '').strip().upper()
-        nacionalidad = request.form.get('pais_nacimiento', '').strip().upper()
-        direccion = request.form.get('direccion', '').strip().upper()
-        telefono_contacto = request.form.get('telefono', '').strip()
-        contacto_emergencia_nombre = request.form.get('nombre_contacto_emergencia', '').strip().upper()
-        contacto_emergencia_parentesco = request.form.get('contacto_emergencia_parentesco', '').strip().upper()
-        contacto_emergencia_telefono = request.form.get('telefono_emergencia', '').strip()
-        condiciones_medicas = request.form.get('condiciones_medicas', '').strip().upper()
-        medicamentos_actuales = request.form.get('medicamentos', '').strip().upper()
-        movilidad = request.form.get('movilidad', '').strip().upper()
-        estado_mental = request.form.get('estado_mental', '').strip().upper()
-        
-        # SQL para insertar un nuevo cliente
-        sql = """
-        INSERT INTO residentes(nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero,
-        estado_civil, nacionalidad, direccion, telefono_contacto,
-        contacto_emergencia_nombre, contacto_emergencia_parentesco, contacto_emergencia_telefono,
-        condiciones_medicas, medicamentos_actuales, movilidad, estado_mental)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        data = (
-            nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil,
-            nacionalidad, direccion, telefono_contacto, contacto_emergencia_nombre,contacto_emergencia_parentesco,
-            contacto_emergencia_telefono, condiciones_medicas, medicamentos_actuales,
-            movilidad, estado_mental  # Estado activo por defecto
+    # ———————— Datos obligatorios del formulario ————————
+    nombre = request.form.get('nombre', '').strip().upper()
+    apellido1 = request.form.get('apellido1', '').strip().upper()
+    apellido2 = request.form.get('apellido2', '').strip().upper()
+    cedula = request.form.get('cedula', '').strip()
+    fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip()
+
+    # Estos cuatro campos son ENUM en la BD: no usar .upper(), deben coincidir exactamente
+    #   genero  ENUM('Masculino','Femenino','Otro')
+    #   estado_civil ENUM('Soltero','Casado','Viudo','Divorciado')
+    #   movilidad ENUM('Independiente','Con ayuda','Dependiente')
+    #   estado_mental ENUM('Lúcido','Desorientado','Demencia')
+    genero = request.form.get('genero', '').strip()
+    estado_civil = request.form.get('estado_civil', '').strip()
+    movilidad = request.form.get('movilidad', '').strip()
+    estado_mental = request.form.get('estado_mental', '').strip()
+
+    # Resto de campos
+    nacionalidad = request.form.get('pais_nacimiento', '').strip().upper()
+    direccion = request.form.get('direccion', '').strip().upper()
+    telefono_contacto = request.form.get('telefono', '').strip()
+    contacto_emergencia_nombre = request.form.get('nombre_contacto_emergencia', '').strip().upper()
+    contacto_emergencia_parentesco = request.form.get('contacto_emergencia_parentesco', '').strip().upper()
+    contacto_emergencia_telefono = request.form.get('telefono_emergencia', '').strip()
+
+    # ———————— Validación: todos los ENUM deben tener valor ————————
+    if not genero or not estado_civil or not movilidad or not estado_mental:
+        mensaje = 'faltan_campos'
+        # Puedes enviar de vuelta los datos que sí se completaron para no obligar a reingresarlos:
+        return render_template(
+            'modulos/clientes/create.html',
+            mensaje=mensaje,
+            # Aquí paso los valores recibidos para que el formulario se repueble:
+            nombre=nombre,
+            apellido1=apellido1,
+            apellido2=apellido2,
+            cedula=cedula,
+            fecha_nacimiento=fecha_nacimiento,
+            genero=genero,
+            estado_civil=estado_civil,
+            pais_nacimiento=nacionalidad,
+            direccion=direccion,
+            telefono=telefono_contacto,
+            nombre_contacto_emergencia=contacto_emergencia_nombre,
+            contacto_emergencia_parentesco=contacto_emergencia_parentesco,
+            telefono_emergencia=contacto_emergencia_telefono,
+            movilidad=movilidad,
+            estado_mental=estado_mental
         )
-        cursor = db.database.cursor()  # Establecer conexión
-        
-        
-        # Verificar si la cédula ya existe
-        cursor.execute("SELECT cedula FROM residentes WHERE cedula = %s", (cedula,))
-        existente = cursor.fetchone()
-        
-        if existente:
-            mensaje = 'existe'
-            return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
-        
+
+    # ———————— Preparar INSERT ————————
+    sql = """
+    INSERT INTO residentes(
+      nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero,
+      estado_civil, nacionalidad, direccion, telefono_contacto,
+      contacto_emergencia_nombre, contacto_emergencia_parentesco, contacto_emergencia_telefono,
+      movilidad, estado_mental
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    data = (
+        nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil,
+        nacionalidad, direccion, telefono_contacto,
+        contacto_emergencia_nombre, contacto_emergencia_parentesco, contacto_emergencia_telefono,
+        movilidad, estado_mental
+    )
+
+    cursor = db.database.cursor()
+
+    # ———————— Verificar si la cédula ya existe ————————
+    cursor.execute("SELECT cedula FROM residentes WHERE cedula = %s", (cedula,))
+    existente = cursor.fetchone()
+    if existente:
+        cursor.close()
+        mensaje = 'existe'
+        return render_template(
+            'modulos/clientes/create.html',
+            mensaje=mensaje,
+            cedula=cedula
+        )
+
+    # ———————— Intentar INSERT/commit ————————
+    try:
         cursor.execute(sql, data)
         db.database.commit()
-        cursor.close()  # Cerrar el cursor  
-        
-       
-        
-        mensaje = 'insertado'
-        return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
+    except mysql.connector.Error as err:
+        db.database.rollback()
+        cursor.close()
+        # Si hay algún otro problema de ENUM mal enviado, err.msg lo detalla.
+        mensaje = 'error_insercion'
+        return render_template(
+            'modulos/clientes/create.html',
+            mensaje=mensaje,
+            error_detalle=err.msg,
+            cedula=cedula
+        )
+    finally:
+        cursor.close()
+
+    # ———————— Éxito ————————
+    mensaje = 'insertado'
+    return render_template('modulos/clientes/create.html', mensaje=mensaje, cedula=cedula)
+
+from flask import request, jsonify
+
+@app.route('/historial_medico/<int:id>/editar', methods=['POST'])
+def editar_historial(id):
+    # Validar y actualizar en base a request.form
+    fecha = request.form.get('fecha')
+    diagnostico = request.form.get('diagnostico')
+    observaciones = request.form.get('observaciones')
+
+    # Aquí actualizas la base de datos y guardas los cambios
+
+    # Simular respuesta exitosa
+    return jsonify({
+        'success': True,
+        'id': id,
+        'fecha': datetime.strptime(fecha, '%Y-%m-%d').strftime('%d/%m/%Y'),  # para mostrar en la tabla
+        'fecha_backend': fecha,  # para rellenar input date
+        'diagnostico': diagnostico,
+        'observaciones': observaciones
+    })
 
 
 
@@ -218,6 +306,8 @@ def btn_cliente_editar_guardar(id):
     movilidad = request.form.get('movilidad', '').strip().upper()
     estado_mental = request.form.get('estado_mental', '').strip().upper()
 
+   
+
     data = (
         nombre, apellido1, apellido2, cedula, fecha_nacimiento, genero, estado_civil, nacionalidad,
         direccion, telefono_contacto, contacto_emergencia_nombre, contacto_emergencia_parentesco,
@@ -227,42 +317,44 @@ def btn_cliente_editar_guardar(id):
 
     cursor = db.database.cursor()
 
-    # ✅ Validar cédula duplicada (excluyendo el mismo registro)
+    # Validar cédula duplicada (excluyendo el mismo registro)
     cursor.execute("SELECT id FROM residentes WHERE cedula = %s AND id != %s", (cedula, id))
     existente = cursor.fetchone()
         
     if existente:
         mensaje = 'existe'
-        return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
-    # ✅ Intentar guardar cambios
-    
+        return render_template('modulos/clientes/create.html', mensaje=mensaje, cedula=cedula)
+
+    # Intentar guardar cambios
     sql = """
-            UPDATE residentes
-            SET nombre = %s,
-                apellido1 = %s,
-                apellido2 = %s,
-                cedula = %s,
-                fecha_nacimiento = %s,
-                genero = %s,
-                estado_civil = %s,
-                nacionalidad = %s,
-                direccion = %s,
-                telefono_contacto = %s,
-                contacto_emergencia_nombre = %s,
-                contacto_emergencia_parentesco = %s,
-                contacto_emergencia_telefono = %s,
-                condiciones_medicas = %s,
-                medicamentos_actuales = %s,
-                movilidad = %s,
-                estado_mental = %s,
-                activo = 1
-            WHERE id = %s
-        """
+        UPDATE residentes
+        SET nombre = %s,
+            apellido1 = %s,
+            apellido2 = %s,
+            cedula = %s,
+            fecha_nacimiento = %s,
+            genero = %s,
+            estado_civil = %s,
+            nacionalidad = %s,
+            direccion = %s,
+            telefono_contacto = %s,
+            contacto_emergencia_nombre = %s,
+            contacto_emergencia_parentesco = %s,
+            contacto_emergencia_telefono = %s,
+            condiciones_medicas = %s,
+            medicamentos_actuales = %s,
+            movilidad = %s,
+            estado_mental = %s,
+        WHERE id = %s
+    """
     cursor.execute(sql, data)
-    db.database.commit()    
+    db.database.commit()
     cursor.close()
+
     mensaje = 'no_existe'
-    return render_template('modulos/clientes/create.html',mensaje=mensaje, cedula=cedula)
+    return render_template('modulos/clientes/create.html', mensaje=mensaje, cedula=cedula)
+
+
 
 
 
@@ -278,7 +370,7 @@ def buscar():
     query = query.lower()
     like_query = f"%{query}%"
     sql = """
-        SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion
+        SELECT id, cedula, nombre, apellido1, apellido2, nacionalidad, telefono_contacto, direccion, activo
         FROM residentes
         WHERE 
             LOWER(nombre) LIKE %s OR
@@ -319,6 +411,27 @@ def index_ver_info(id):
     cursor.close()  # Cerrar el cursor
     return render_template('/modulos/clientes/ver_info.html', arreglo=arreglo)
 
+@app.route('/toggle_estado/<int:residente_id>', methods=['POST'])
+@login_required
+def toggle_estado_residente(residente_id):
+    data = request.get_json()
+    nuevo_estado = data.get('estado')
+
+    if nuevo_estado is None:
+        return jsonify({'success': False, 'error': 'Estado no proporcionado'}), 400
+
+    estado_db = 1 if nuevo_estado in [True, 'true', 'activo', 1] else 0
+
+    cursor = db.database.cursor()
+    try:
+        cursor.execute("UPDATE residentes SET activo = %s WHERE id = %s", (estado_db, residente_id))
+        db.database.commit()
+        return jsonify({'success': True, 'estado': estado_db})
+    except Exception as e:
+        db.database.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cursor.close()
 
 
 
@@ -333,44 +446,120 @@ def historial_medico(id):
     cursor = db.database.cursor(dictionary=True)
     cursor.execute("SELECT * FROM historial_medico WHERE residente_id = %s", (id,))
     historial = cursor.fetchall()
+    cursor.execute("""
+    SELECT CONCAT(nombre, ' ', apellido1, ' ', apellido2) AS nombre_completo 
+    FROM residentes 
+    WHERE id = %s
+""", (id,))
+    residente = cursor.fetchone() 
+    cursor.close()
+    return render_template('/modulos/clientes/historial_medico.html', historial=historial, residente=residente ,residente_id=id)
+
+
+@app.route('/medicacion/<int:id>')
+@login_required
+def medicacion(id):
+    cursor = db.database.cursor(dictionary=True)
     cursor.execute("SELECT * FROM  medicacion WHERE residente_id = %s", (id,))
     medicacion = cursor.fetchall()
     cursor.close()
-    return render_template('/modulos/clientes/historial_medico.html', historial=historial, medicacion=medicacion ,residente_id=id)
+    return render_template('/modulos/clientes/medicacion.html', medicacion=medicacion ,residente_id=id)
 
 
-
-
-# Ruta para actualizar el historial médico
-@app.route('/historial_medico/<int:id>/actualizar', methods=['POST'])
+@app.route('/medicacion/nueva/<int:residente_id>', methods=['POST'])
 @login_required
-def actualizar_historial_medico(id):
-    # Recibimos los datos del formulario
-    fecha = request.form.get('fecha')
-    diagnostico = request.form.get('diagnostico', '').strip().upper()
-    medico = request.form.get('medico', '').strip().upper()
-    notas = request.form.get('notas', '').strip().upper()
+def agregar_medicacion(residente_id):
+    medicamento = request.form.get('medicamento')
+    dosis = request.form.get('dosis')
+    frecuencia = request.form.get('frecuencia')
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_fin = request.form.get('fecha_fin')
 
-    # Usamos la conexión importada
-    cursor = database.cursor()
+    # Validar campos obligatorios
+    if not medicamento or not dosis or not frecuencia or not fecha_inicio:
+        flash('Por favor completa todos los campos obligatorios.', 'danger')
+        return redirect(url_for('medicacion', id=residente_id))
 
     try:
-        # Actualizamos el historial médico en la base de datos
-        cursor.execute("""
-            UPDATE historial_medico
-            SET fecha = %s, diagnostico = %s, medico = %s, notas = %s
-            WHERE id = %s
-        """, (fecha, diagnostico, medico, notas, id))
-
-        # Hacemos commit para guardar los cambios
-        database.commit()
+        cursor = db.database.cursor()
+        sql = """
+            INSERT INTO medicacion (residente_id, medicamento, dosis, frecuencia, fecha_inicio, fecha_fin)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (residente_id, medicamento, dosis, frecuencia, fecha_inicio, fecha_fin))
+        db.database.commit()
+        cursor.close()
+        flash('Medicamento agregado correctamente.', 'success')
     except Exception as e:
-        # Si ocurre algún error, hacemos rollback
-        database.rollback()
-        print(f"Error: {e}")
-        return "Hubo un error al actualizar el registro."
+        flash('Error al agregar el medicamento.', 'danger')
+        print(f"Error al insertar medicación: {e}")
 
-    return redirect(url_for('historial_medico'))  # Redirigir a la lista de historial
+    # Redirigir a la página que muestra la medicación del residente
+    return redirect(url_for('medicacion', id=residente_id))
+
+
+
+# RUTA PARA ELIMINAR UN MEDICAMENTO
+@app.route('/medicacion/<int:id>/eliminar', methods=['POST', 'GET'])
+@login_required
+def eliminar_medicacion(id):
+    cursor = db.database.cursor(dictionary=True)
+    # Primero obtenemos el residente_id para luego redirigir correctamente
+    cursor.execute("SELECT residente_id FROM medicacion WHERE id = %s", (id,))
+    medicamento = cursor.fetchone()
+    
+    if medicamento is None:
+        cursor.close()
+        flash('Medicamento no encontrado.', 'danger')
+        return redirect(url_for('dashboard'))  # o donde consideres
+    
+    residente_id = medicamento['residente_id']
+
+    try:
+        cursor.execute("DELETE FROM medicacion WHERE id = %s", (id,))
+        db.database.commit()
+        flash('Medicamento eliminado correctamente.', 'success')
+    except Exception as e:
+        flash('Error al eliminar el medicamento.', 'danger')
+        print(f"Error eliminando medicacion: {e}")
+    finally:
+        cursor.close()
+
+    return redirect(url_for('medicacion', id=residente_id))
+
+
+
+
+@app.route('/historial_medico/<int:registro_id>/editar', methods=['POST'])
+def editar_registro_medico(registro_id):
+    if not request.is_xhr:  # o usa: if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return jsonify({'error': 'Acceso no permitido'}), 403
+
+    registro = RegistroMedico.query.get_or_404(registro_id)
+
+    try:
+        fecha = request.form['fecha']
+        diagnostico = request.form['diagnostico']
+        observaciones = request.form.get('observaciones', '')
+
+        registro.fecha = datetime.strptime(fecha, '')
+        registro.diagnostico = diagnostico
+        registro.observaciones = observaciones
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'id': registro.id,
+            'fecha': registro.fecha.strftime('%d/%m/%Y'),
+            'fechaISO': registro.fecha.strftime('%Y-%m-%d'),
+            'diagnostico': registro.diagnostico,
+            'observaciones': registro.observaciones
+        })
+    except Exception as e:
+        return jsonify({'error': 'No se pudo actualizar el registro'}), 400
+
+
 
 
 

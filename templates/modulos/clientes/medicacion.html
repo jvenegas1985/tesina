@@ -1,0 +1,126 @@
+{% include '/modulos/clientes/admin_header.html' %}
+
+<div class="container mt-1 pt-4">
+  <h5 class="mb-4 text-center">Tabla de Medicacion</h5>
+
+  <a href="/ver_info/{{ residente_id }}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="fas fa-arrow-left"></i> Regresar
+  </a>
+
+  <div id="alertaExito" class="alert alert-success d-none text-center" role="alert">
+    Registro eliminado correctamente.
+  </div>
+
+  <!-- Medicación -->
+  <div class="col-md-12">
+    <div class="card shadow-lg rounded-4 mb-4">
+      <div class="card-body">
+        <h6 class="card-title text-primary">Medicación Actual</h6>
+        <p class="text-muted">Medicamentos asignados actualmente.</p>
+
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Medicamento</th>
+                <th>Dosis</th>
+                <th>Frecuencia</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for medicamento in medicacion %}
+              <tr>
+                <td>{{ medicamento.medicamento | e }}</td>
+                <td>{{ medicamento.dosis | e }}</td>
+                <td>{{ medicamento.frecuencia | e }}</td>
+                <td>{{ medicamento.fecha_inicio.strftime('%d/%m/%Y') if medicamento.fecha_inicio else '' }}</td>
+                <td>{{ medicamento.fecha_fin.strftime('%d/%m/%Y') if medicamento.fecha_fin else '' }}</td>
+                <td class="text-center">
+                  <!-- Botón que abre modal eliminar -->
+                  <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarMedicamentoModal{{ medicamento.id }}" title="Eliminar">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Modal Confirmación Eliminar -->
+              <div class="modal fade" id="eliminarMedicamentoModal{{ medicamento.id }}" tabindex="-1" aria-labelledby="eliminarMedicamentoLabel{{ medicamento.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                      <h5 class="modal-title" id="eliminarMedicamentoLabel{{ medicamento.id }}">Eliminar Medicamento</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                      ¿Está seguro que desea eliminar el medicamento <strong>{{ medicamento.medicamento | e }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <a href="/medicacion/{{ medicamento.id }}/eliminar" class="btn btn-danger">Eliminar</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {% else %}
+              <tr><td colspan="6" class="text-center">No hay medicación registrada.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-center mt-3">
+          <!-- Botón para abrir modal agregar medicamento -->
+          <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#agregarMedicacionModal">
+            ➕ Agregar Medicamento
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para agregar medicación -->
+<div class="modal fade" id="agregarMedicacionModal" tabindex="-1" aria-labelledby="agregarMedicacionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="/medicacion/nueva/{{ residente_id }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="agregarMedicacionLabel">Agregar Medicamento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="medicamento" class="form-label">Medicamento</label>
+            <input type="text" class="form-control" id="medicamento" name="medicamento" required maxlength="100">
+          </div>
+          <div class="mb-3">
+            <label for="dosis" class="form-label">Dosis</label>
+            <input type="text" class="form-control" id="dosis" name="dosis" required maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label for="frecuencia" class="form-label">Frecuencia</label>
+            <input type="text" class="form-control" id="frecuencia" name="frecuencia" required maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
+          </div>
+          <div class="mb-3">
+            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% include 'footer.html' %}
