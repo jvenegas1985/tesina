@@ -46,34 +46,42 @@ from flask import session
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['usuario']       
-        password = request.form['contraseña']    
-        
+        username = request.form['usuario']
+        password = request.form['contraseña']
+
         cursor = db.database.cursor()
-        cursor.execute("SELECT id, username, password, rol, nombre FROM usuarios WHERE username = %s", (username,))
+        cursor.execute("SELECT id, username, password, rol, nombre, activo FROM usuarios WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
 
-        if user and password == user[2]:
-            user_obj = User(
-                id=user[0],
-                username=user[1],
-                password=user[2],
-                rol=user[3],
-                nombre=user[4]
-            )
-            login_user(user_obj)
+        if user:
+            if user[5] == 0:
+                flash("Tu cuenta está inactiva. Contacta al administrador.", "warning")
+                return render_template('login.html')
 
-            # Guardamos el rol en session para que esté disponible en las plantillas
-            session['rol'] = user_obj.rol  
-            session['nombre'] = user_obj.nombre  # si quieres también el nombre
+            if password == user[2]:
+                user_obj = User(
+                    id=user[0],
+                    username=user[1],
+                    password=user[2],
+                    rol=user[3],
+                    nombre=user[4]
+                )
+                login_user(user_obj)
 
-            flash("Inicio de sesión exitoso", "success")
-            return redirect(url_for('index_admin'))
+                session['rol'] = user_obj.rol
+                session['nombre'] = user_obj.nombre
+                session['mostrar_modal'] = True
+
+                flash("Inicio de sesión exitoso", "success")
+                return redirect(url_for('index_admin'))
+            else:
+                flash("Contraseña incorrecta. Intenta de nuevo.", "danger")
         else:
-            flash("Credenciales incorrectas. Intenta de nuevo.", "danger")
+            flash("Usuario no encontrado.", "danger")
 
     return render_template('login.html')
+
 
 
 @app.route('/logout')
@@ -304,7 +312,7 @@ def btn_cliente_editar_guardar(id):
     condiciones_medicas = request.form.get('condiciones_medicas', '').strip().upper()
     medicamentos_actuales = request.form.get('medicamentos', '').strip().upper()
     movilidad = request.form.get('movilidad', '').strip().upper()
-    estado_mental = request.form.get('estado_mental', '').strip().upper()
+    estado_mental = request.form.get('estado_mental', '').strip()
 
    
 
@@ -344,7 +352,7 @@ def btn_cliente_editar_guardar(id):
             condiciones_medicas = %s,
             medicamentos_actuales = %s,
             movilidad = %s,
-            estado_mental = %s,
+            estado_mental = %s
         WHERE id = %s
     """
     cursor.execute(sql, data)
@@ -352,7 +360,9 @@ def btn_cliente_editar_guardar(id):
     cursor.close()
 
     mensaje = 'no_existe'
-    return render_template('modulos/clientes/create.html', mensaje=mensaje, cedula=cedula)
+
+    return redirect(f'/ver_info/{id}')
+
 
 
 

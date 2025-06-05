@@ -146,7 +146,44 @@
     </div>
 </div>
 
+<!-- Modal de Exención de Responsabilidad -->
+<div class="modal fade" id="modalExencion" tabindex="-1" aria-labelledby="modalExencionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="modalExencionLabel">Aviso importante</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p>El presente software ha sido desarrollado como parte del trabajo de tesis para la obtención del título universitario en la Universidad Hispanoamericana. Su objetivo principal es demostrar las competencias técnicas del autor y proponer una solución tecnológica a la gestión de centros geriátricos.
+
+El uso de este sistema por parte de terceros queda bajo su total responsabilidad. El autor no asume ninguna responsabilidad por daños, pérdidas de información, errores en la operación del sistema ni consecuencias clínicas, legales o administrativas que puedan derivarse de una mala implementación, administración o uso del mismo.
+
+
+Este sistema no ha sido certificado por entidades regulatorias de salud, y no debe sustituir criterios médicos ni administrativos profesionales en la gestión de centros asistenciales.</p>
+        <p class="mb-0"><strong>Por favor, utilícelo de forma responsable.</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% if session.get('mostrar_modal') %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modal = new bootstrap.Modal(document.getElementById('modalExencion'));
+    modal.show();
+  });
+</script>
+{% set _ = session.pop('mostrar_modal') %}
+
+{% endif %}
+
+
+
 </body>
 {% include 'footer.html' %}
-</html>
+
