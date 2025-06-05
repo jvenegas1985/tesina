@@ -628,6 +628,62 @@ def eliminar_historial(id):
 
 
 
+# Listar usuarios
+@app.route('/admin/usuarios')
+def admin_usuarios():
+    cursor = db.database.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM usuarios")
+    usuarios = cursor.fetchall()
+    cursor.close()
+    return render_template('modulos/usuarios/admin_usuarios.html', usuarios=usuarios)
+
+@app.route('/admin/usuarios/crear', methods=['POST'])
+def crear_usuario():
+    f = request.form
+    cursor = db.database.cursor()
+    sql = """
+        INSERT INTO usuarios (username, correo, password, nombre, apellido, telefono, rol, activo)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    valores = (
+        f['username'], f['correo'], f['password'], f['nombre'], f['apellido'],
+        f['telefono'], f['rol'], 1 if 'activo' in f else 0
+    )
+    cursor.execute(sql, valores)
+    db.database.commit()
+    cursor.close()
+    flash("Usuario creado exitosamente")
+    return redirect(url_for('admin_usuarios'))
+
+@app.route('/admin/usuarios/editar/<int:id>', methods=['POST'])
+def editar_usuario(id):
+    f = request.form
+    cursor = db.database.cursor()
+    sql = """
+        UPDATE usuarios
+        SET username=%s, correo=%s, nombre=%s, apellido=%s,
+            telefono=%s, rol=%s, activo=%s
+        WHERE id=%s
+    """
+    valores = (
+        f['username'], f['correo'], f['nombre'], f['apellido'],
+        f['telefono'], f['rol'], 1 if 'activo' in f else 0, id
+    )
+    cursor.execute(sql, valores)
+    db.database.commit()
+    cursor.close()
+    flash("Usuario actualizado correctamente")
+    return redirect(url_for('admin_usuarios'))
+
+@app.route('/admin/usuarios/eliminar/<int:id>', methods=['POST'])
+def eliminar_usuario(id):
+    cursor = db.database.cursor()
+    cursor.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+    db.database.commit()
+    cursor.close()
+    flash("Usuario eliminado")
+    return redirect(url_for('admin_usuarios'))
+
 
 
 if __name__ == '__main__':
